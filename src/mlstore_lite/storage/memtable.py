@@ -11,16 +11,16 @@ It holds the "latest" value for each key before we flush it to an on-disk SSTabl
 
 #from __future__ import annotations , optional makes type hints as strings to prevent crushing.
 
+# src/mlstore_lite/storage/memtable.py
+
 from typing import Dict, Iterator, Optional, Union
 
 
-# A unique marker object to represent "this key was deleted".
-# We use an object() instead of None to avoid ambiguity.
-# (If later you want to allow None as a real value, you're still safe.)
 TOMBSTONE = object()
 
 Value = str
-StoredValue = Union[Value, object]  # either a real value (str) or TOMBSTONE
+StoredValue = Union[Value, object]  # str or TOMBSTONE
+
 
 class Entry:
     def __init__(self, key: str, value: StoredValue):
@@ -33,32 +33,42 @@ class Entry:
 
 class MemTable:
     def __init__(self, max_entries: int = 1000):
-        self._data: Dict[str, StoredValue] = {}  # the underscore is a convention to indicate "private" members that should not be accessed from outside the class.
+        self._data: Dict[str, StoredValue] = {}
         self._max_entries = max_entries
-    
-    def put( self, key:str, value:str) -> None:
+
+    def put(self, key: str, value: str) -> None:
         self._data[key] = value
 
     def delete(self, key: str) -> None:
-        self._data[key]= TOMBSTONE
-    
-    def get(self,key:str) -> Optional[str]:
+        self._data[key] = TOMBSTONE
+
+    def get(self, key: str) -> Optional[str]:
         v = self._data.get(key)
         if v is None or v is TOMBSTONE:
             return None
         return v
-    
+
+    def lookup(self, key: str) -> Optional[StoredValue]:
+        """
+        Raw lookup for KVStore.
+
+        Returns:
+          - str value
+          - TOMBSTONE
+          - None (not present in memtable)
+        """
+        return self._data.get(key, None)
+
     def should_flush(self) -> bool:
         return len(self._data) >= self._max_entries
-    
+
     def iter_sorted_entries(self) -> Iterator[Entry]:
         for key in sorted(self._data.keys()):
-            yield Entry(key, self._data[key]) #if we had 1 million keys, wed have to allocate memory for all of them at once.
-            # By yielding one at a time, we can process them in a streaming fashion without needing to hold them all in memory at once.
-    
+            yield Entry(key, self._data[key])
+
     def clear(self) -> None:
         self._data.clear()
-        
+
     def __len__(self) -> int:
         return len(self._data)
 

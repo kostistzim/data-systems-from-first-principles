@@ -14,7 +14,7 @@ class KVStore:
         self,
         db_dir: str,
         memtable_max_entries: int = 1000,
-        compact_after: int = 4,  # when SSTable count reaches this, compact
+        compact_after: int = 4,
     ):
         self.db_dir = db_dir
         os.makedirs(self.db_dir, exist_ok=True)
@@ -39,7 +39,7 @@ class KVStore:
             elif op == "del":
                 self.mem.delete(key)
 
-        # If replay overfills, flush (keeps startup deterministic)
+        # If replay overfills, flush
         if self.mem.should_flush():
             self._flush_memtable()
 
@@ -62,12 +62,12 @@ class KVStore:
             self._flush_memtable()
 
     def get(self, key: str) -> Optional[str]:
-        # 1) MemTable first (must distinguish tombstone vs missing)
-        v = self.mem._data.get(key, None)  # ok for now; later add a mem.lookup()
+        # 1) MemTable first
+        v = self.mem.lookup(key)
         if v is not None:
             if v is TOMBSTONE:
                 return None
-            return v  # str
+            return v
 
         # 2) SSTables newest -> oldest
         for table in self.sstables:
@@ -76,7 +76,7 @@ class KVStore:
                 continue
             if found is TOMBSTONE:
                 return None
-            return found  # str
+            return found
 
         return None
 
@@ -97,7 +97,7 @@ class KVStore:
             except ValueError:
                 return -1
 
-        files.sort(key=table_num, reverse=True)  # newest first
+        files.sort(key=table_num, reverse=True)
         return [
             SSTable(os.path.join(self.db_dir, f))
             for f in files
@@ -118,17 +118,10 @@ class KVStore:
         return os.path.join(self.db_dir, f"sst_{next_n:06d}.dat")
 
     def _reset_wal(self) -> None:
-        """
-        Simple WAL truncation:
-        After data is safely in SSTables and MemTable is cleared, we can reset wal.log.
-        """
-        # close + recreate is safest, but we don't know your WAL internals.
-        # This brute force truncation is enough for this project stage:
         with open(self.wal_path, "w", encoding="utf-8") as f:
             f.flush()
             os.fsync(f.fileno())
 
-        # Recreate WAL object so future appends go to the truncated file cleanly
         self.wal = WAL(self.wal_path)
 
     def _flush_memtable(self) -> None:
@@ -153,18 +146,12 @@ class KVStore:
             self._compact_all()
 
     def _compact_all(self) -> None:
-        """
-        Compacts all SSTables into one.
-        """
-        # Output file should get a new number (higher than existing).
         out_path = self._next_sstable_path()
 
         new_table = self.compactor.compact(self.sstables, out_path)
 
-        # Delete old tables, keep the new one
         old = self.sstables
         self.sstables = [new_table]
         self.compactor.delete_tables(old)
 
-        # Reset WAL again (safe and keeps it small)
         self._reset_wal()
