@@ -1,334 +1,414 @@
-# MLStore-Lite: Storage Engine Design Notes (Phase 1 – Week 1)
+# MLStore-Lite: Week 1 Notes
+## Storage Engine Foundations
 
-## 1. Overview
+## 1. Why This Week Matters
 
-This week focused on implementing a minimal write-optimized storage engine inspired by *Designing Data-Intensive Applications* (Chapter 3). The goal was not performance parity with industrial systems like RocksDB or Cassandra, but to deeply understand the architectural principles behind log-structured storage.
+Before a distributed system can replicate data or split data across machines, it first needs a correct way to store data on one machine.
 
-The system we built, **MLStore-Lite**, implements:
+That is the purpose of the **storage engine**.
 
-- Write-Ahead Logging (WAL)
-- In-memory MemTable
-- Immutable Sorted String Tables (SSTables)
-- Basic compaction
-- Crash recovery
+In this project, the storage engine is the part of MLStore-Lite that answers questions like:
 
-This forms a minimal **Log-Structured Merge Tree (LSM-tree)** architecture.
+- How is a write stored safely?
+- What happens if the process crashes?
+- Where does data live before it is written to disk?
+- How do reads find the newest value for a key?
 
----
+This week implements a **single-node key-value store** inspired by the LSM-tree ideas in DDIA Chapter 3.
 
-## 2. Architectural Overview
+The result is a minimal but correct storage layer with:
 
-At a high level, the system consists of four core components:
+- a write-ahead log (`WAL`)
+- an in-memory table (`MemTable`)
+- immutable disk files (`SSTables`)
+- compaction
+- crash recovery
 
-```
-Client
-  ↓
-KVStore (orchestrator)
-  ├── WAL (durable append-only log)
-  ├── MemTable (in-memory state)
-  └── SSTables (immutable sorted files)
-```
-
-The system follows a **write-optimized design**:
-
-- Writes are sequential (fast)
-- Reads may require checking multiple structures
-- Periodic compaction reduces read amplification
+This is the foundation that the replication layer builds on later.
 
 ---
 
-## 3. Write Path
+## 2. What Is a Storage Engine?
 
-The write path is intentionally ordered for durability.
+A **storage engine** is the low-level part of a database that is responsible for:
 
-### PUT(key, value)
+- storing data
+- reading data back
+- keeping data durable across crashes
+- deciding how data is laid out on disk
 
-1. Append operation to WAL (fsync).
-2. Apply update to MemTable.
-3. If MemTable exceeds threshold → flush to SSTable.
+In MLStore-Lite, the storage engine is not the whole system. It is the local persistence layer used by one node.
 
-### DELETE(key)
+You can think of the system in layers:
 
-1. Append delete operation to WAL.
-2. Insert a tombstone into MemTable.
-3. Possibly trigger flush.
-
-The strict ordering is:
-
+```text
+Client API
+    ↓
+KVStore
+    ↓
+WAL + MemTable + SSTables + Compaction
 ```
-WAL append → MemTable update
+
+So when a client does:
+
+```text
+put("user:42", "0.91")
 ```
 
-This guarantees durability. If a crash occurs after WAL write but before memory update, recovery will replay the log and reconstruct state.
+the storage engine is the part that makes sure that write is preserved and later returned by:
 
-If the order were reversed, data loss would be possible.
+```text
+get("user:42")
+```
 
 ---
 
-## 4. Write-Ahead Log (WAL)
+## 3. Main Components
 
-The WAL is an append-only JSON-lines file:
+The Week 1 design has four main pieces.
+
+### 3.1 WAL
+
+The **write-ahead log** is an append-only file on disk.
+
+Every write is first recorded in the WAL before the in-memory state is updated.
+
+Example records:
 
 ```json
 {"op":"put","key":"a","value":"1"}
 {"op":"del","key":"b"}
 ```
 
-Properties:
+Why it exists:
 
-- Sequential disk writes (fast on HDD/SSD).
-- Fsync ensures persistence.
-- Replay on startup reconstructs MemTable state.
+- If the process crashes, the WAL still contains the recent writes.
+- On restart, the system can replay the WAL and rebuild state.
 
-### Why append-only?
+Important idea:
 
-Sequential disk I/O is dramatically faster than random writes. The WAL leverages this property.
+The WAL gives the system **durability**.
 
-### Crash Recovery
+### 3.2 MemTable
 
-On startup:
+The **MemTable** is an in-memory dictionary holding the latest values for keys.
 
-- WAL is replayed in order.
-- Each operation is applied to a fresh MemTable.
-- System state becomes deterministic.
+Why it exists:
+
+- Memory is fast.
+- Recent writes can be served without going to disk.
+
+The MemTable is temporary. When it becomes large enough, it is flushed to disk.
+
+### 3.3 SSTables
+
+An **SSTable** is an immutable, sorted file on disk.
+
+SSTable means **Sorted String Table**.
+
+Important properties:
+
+- keys are stored in sorted order
+- files are never modified after creation
+- new disk state is created by writing a new file, not editing an old one
+
+Why sorted files are useful:
+
+- lookups can stop early
+- merging files is easier
+- compaction becomes more natural
+
+### 3.4 Compaction
+
+Over time, many SSTables accumulate.
+
+**Compaction** merges them into a smaller number of newer SSTables.
+
+Its job is to:
+
+- remove overwritten values
+- preserve only the newest version of a key
+- keep delete markers correct
+- reduce the number of files reads must check
 
 ---
 
-## 5. MemTable
+## 4. The Core Idea: LSM-Tree Style Storage
 
-The MemTable is an in-memory dictionary storing the most recent state.
+This design follows the ideas of an **LSM-tree**.
 
-Key features:
+LSM stands for **Log-Structured Merge Tree**.
 
-- O(1) average lookup and insert.
-- Stores both values and tombstones.
-- Tracks size for flush threshold.
+The big idea is:
 
-### Tombstones
+- writes are first cheap and sequential
+- cleanup and merging happen later
 
-Instead of deleting keys outright, we store a special `TOMBSTONE` object.
+That is different from a structure like a B-tree, where data is often updated in place.
 
-Why?
+Why this matters:
 
-Because once data is flushed to disk, older SSTables may still contain previous values. If we simply removed keys from memory, older on-disk data could "resurrect" deleted keys.
+- sequential writes are usually efficient
+- the design fits write-heavy systems
+- many real systems use this idea, including RocksDB, Cassandra, and LevelDB
 
-Tombstones ensure deletion semantics survive flushing and compaction.
+This is one reason LSM-style storage is a good conceptual fit for ML feature storage and event-heavy systems.
 
 ---
 
-## 6. SSTables
+## 5. Write Path
 
-SSTables are immutable, sorted, on-disk segment files.
+The **write path** means: what happens when the user writes data?
 
-Example format (JSON lines):
+For `put(key, value)`, the order is:
 
-```json
-{"k":"a","t":0,"v":"1"}
-{"k":"b","t":1}
+1. append the operation to the WAL
+2. update the MemTable
+3. if needed, flush the MemTable into a new SSTable
+
+For `delete(key)`, the order is:
+
+1. append a delete record to the WAL
+2. store a tombstone in the MemTable
+3. flush later if needed
+
+The key ordering rule is:
+
+```text
+WAL first -> memory second
 ```
 
-Where:
-- `t = 0` → value
-- `t = 1` → tombstone
+Why this order matters:
 
-Properties:
+- If the process crashes after the WAL write, recovery can replay it.
+- If memory were updated first and the WAL write never happened, that update could be lost.
 
-- Sorted by key.
-- Written atomically (temp file → rename).
-- Never modified after creation.
-
-### Why sorted?
-
-Sorted order enables:
-
-- Early termination during lookup.
-- Future binary search or sparse indexing.
-- Efficient compaction (merge sorted streams).
+So the WAL comes first because it is the durable record.
 
 ---
 
-## 7. Read Path
+## 6. Read Path
 
-Lookup order is critical:
+The **read path** means: where does the system look when someone calls `get(key)`?
 
-1. Check MemTable.
-2. Check SSTables from newest to oldest.
+The lookup order is:
 
-Newest data must win.
+1. check the MemTable
+2. if not found, check SSTables from newest to oldest
+
+Why newest-to-oldest matters:
+
+Because old disk files may contain stale values.
 
 Example:
 
-```
-SSTable_1: a → 1
-SSTable_2: a → TOMBSTONE
+```text
+Older SSTable:  user:42 -> "0.4"
+Newer SSTable:  user:42 -> "0.9"
 ```
 
-Correct result for `get("a")` must be `None`.
+The correct answer is `"0.9"`.
 
-If we searched oldest first, stale values would reappear.
+So the system must search the newest state first.
+
+---
+
+## 7. Deletes and Tombstones
+
+Deletes in LSM-style storage are not handled by physically removing old data everywhere immediately.
+
+Instead, the system writes a **tombstone**.
+
+A tombstone is a special marker meaning:
+
+```text
+this key has been deleted
+```
+
+Why that is necessary:
+
+Suppose an old SSTable on disk still contains:
+
+```text
+user:42 -> "0.9"
+```
+
+If we simply removed `user:42` from memory and did nothing else, a later read might still find the old disk value and incorrectly think the key still exists.
+
+The tombstone prevents that.
+
+So tombstones are not an implementation detail only. They are part of the correctness of delete behavior.
 
 ---
 
 ## 8. Flushing
 
-When MemTable reaches a threshold:
+The MemTable cannot grow forever.
 
-1. Its contents are written to a new SSTable.
-2. MemTable is cleared.
-3. WAL is truncated/reset.
+When it reaches a threshold, the system **flushes** it:
 
-Flushing converts in-memory state into immutable disk state.
+1. sort the MemTable entries
+2. write them into a new SSTable
+3. clear the MemTable
+4. reset the WAL
+
+This moves recent in-memory state into durable immutable disk state.
 
 Tradeoff:
 
-- Smaller threshold → more SSTables → higher read amplification.
-- Larger threshold → more memory usage, fewer flushes.
+- small MemTable: more frequent flushes, more SSTables
+- large MemTable: fewer flushes, more memory usage
 
 ---
 
 ## 9. Compaction
 
-Compaction merges multiple SSTables into one.
+Compaction is the cleanup step of the storage engine.
 
-Algorithm (simplified):
+Without compaction, the system would keep accumulating SSTables, which would make reads more expensive.
 
-1. Iterate SSTables from oldest to newest.
-2. For each key, newest value overwrites older ones.
-3. Write merged sorted output into new SSTable.
-4. Delete old SSTables.
+In MLStore-Lite, compaction:
 
-Effects:
+1. reads several SSTables
+2. keeps only the newest value for each key
+3. preserves tombstones correctly
+4. writes one new merged SSTable
+5. deletes the old files
 
-- Reduces number of files.
-- Reduces read amplification.
-- Eliminates obsolete overwritten values.
-- Preserves tombstones correctly.
+Why compaction exists:
 
-Compaction trades CPU and disk I/O for improved read performance.
+- it reduces read amplification
+- it removes obsolete values
+- it keeps the on-disk state manageable
 
----
+Compaction costs CPU and disk I/O, so it is a tradeoff:
 
-## 10. Tradeoffs
-
-### Write Amplification
-
-Data may be written multiple times:
-
-- WAL
-- Initial SSTable
-- Compaction outputs
-
-This increases total bytes written.
-
-### Read Amplification
-
-Reads may require checking:
-
-- MemTable
-- Multiple SSTables
-
-Compaction mitigates this.
-
-### Space Amplification
-
-Old values and tombstones temporarily consume disk space until compaction removes them.
+- better reads later
+- extra work during cleanup
 
 ---
 
-## 11. Why LSM Instead of B-Trees?
+## 10. Crash Recovery
 
-B-tree systems:
+Crash recovery is one of the most important reasons the WAL exists.
 
-- Modify data in place.
-- Random writes.
-- Good read locality.
+On restart:
 
-LSM systems:
+1. the system opens the WAL
+2. replays each recorded operation
+3. rebuilds the MemTable
+4. continues serving reads and writes
 
-- Append-only writes.
-- Sequential disk usage.
-- Excellent write throughput.
+This gives the system a deterministic recovery path.
 
-LSM is especially suited for:
-
-- Write-heavy workloads.
-- Log/event ingestion.
-- ML feature stores.
-- Time-series data.
+That means the storage engine can recover recent writes that were durable in the log even if they were not yet flushed into SSTables.
 
 ---
 
-## 12. System Properties Achieved
+## 11. What Has Been Built So Far
 
-The current MLStore-Lite guarantees:
+At the end of Week 1, MLStore-Lite supports:
 
-- Durability (via WAL + fsync).
-- Crash recovery.
-- Correct delete semantics.
-- Immutable on-disk segments.
-- Basic compaction.
-- Deterministic startup state.
+- durable single-node writes
+- reads that return the newest visible value
+- correct delete behavior
+- crash recovery
+- immutable on-disk sorted segments
+- basic compaction
 
-This forms a correct single-node storage engine.
+This is enough to call it a working single-node storage engine.
 
----
-
-## 13. Limitations
-
-- No indexing inside SSTables (linear scan).
-- No Bloom filters.
-- No multi-level compaction.
-- No concurrency control.
-- No replication.
-- No sharding.
-
-These are deliberate omissions for clarity.
+It is not a full production database, but it correctly demonstrates the core ideas.
 
 ---
 
-## 14. Transition to Replication
+## 12. Tradeoffs of This Design
 
-Replication builds naturally on this architecture.
+This design is intentionally simple, but the important tradeoffs are already visible.
 
-Key insight:
+### 12.1 Write amplification
 
-The WAL already functions as an ordered stream of mutations.
+The same logical data may be written multiple times:
 
-Replication can be implemented by:
+- once to the WAL
+- once to an SSTable
+- again during compaction
 
-- Streaming WAL entries to follower nodes.
-- Replaying them in order.
-- Ensuring followers apply operations deterministically.
+### 12.2 Read amplification
 
-Thus, the storage layer becomes the foundation for:
+A read may need to check:
 
-- Leader-based replication.
-- Log shipping.
-- Eventually consistent experiments.
+- the MemTable
+- several SSTables
 
----
+### 12.3 Space amplification
 
-## 15. Conceptual Summary
+Old values and tombstones may remain on disk until compaction removes them.
 
-This week implemented a minimal LSM-tree:
-
-- Writes are sequential and durable.
-- Reads check memory first, then immutable disk segments.
-- Compaction merges sorted segments.
-- Tombstones preserve delete correctness.
-- Recovery is log-driven and deterministic.
-
-This architecture mirrors the foundational ideas behind:
-
-- LevelDB
-- RocksDB
-- Cassandra
-- HBase
-
-Understanding this structure is essential before layering replication and distributed concerns on top.
+These tradeoffs are central to LSM-style systems.
 
 ---
 
-## Conclusion
+## 13. What Is Missing
 
-The current MLStore-Lite implementation achieves a functioning write-optimized storage engine with crash recovery and compaction. It demonstrates core tradeoffs of LSM-based systems and provides a solid foundation for implementing leader-based replication in the next phase.
+The Week 1 storage engine deliberately does not include:
+
+- replication
+- partitioning
+- concurrency control
+- indexes inside SSTables
+- bloom filters
+- advanced compaction strategies
+
+These omissions are useful because they keep the storage layer understandable.
+
+---
+
+## 14. How Storage Connects to Replication
+
+This is the natural bridge into Week 2.
+
+A single node can now:
+
+- store key-value data
+- recover after crashes
+- maintain an ordered history of recent writes through the WAL
+
+Replication builds on top of that.
+
+The key idea is:
+
+- one node can accept writes locally
+- other nodes can apply the same writes in the same order
+- if they all use the same storage engine, they should converge to the same state
+
+So storage answers:
+
+```text
+How does one machine store data correctly?
+```
+
+Replication answers:
+
+```text
+How do several machines keep copies of that data?
+```
+
+That is why storage comes first.
+
+---
+
+## 15. Short Summary
+
+Week 1 built the local persistence layer of MLStore-Lite.
+
+The storage engine uses:
+
+- a WAL for durability
+- a MemTable for fast recent writes
+- SSTables for immutable disk storage
+- compaction for cleanup
+
+This gives the project a solid single-node base.
+
+The next natural step is replication: taking this one-node design and making several nodes keep consistent copies of the same data.

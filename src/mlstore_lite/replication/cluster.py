@@ -31,6 +31,11 @@ class Cluster:
             raise ValueError("Cluster requires at least one node")
 
         self.nodes: Dict[str, Node] = {node.node_id: node for node in nodes}
+        if len(self.nodes) != len(nodes):
+            raise ValueError("Cluster requires unique node ids")
+        if replication_mode not in ("async", "sync"):
+            raise ValueError(f"Invalid replication mode: {replication_mode}")
+
         self.replication_mode: ReplicationMode = replication_mode
         self.follower_apply_delay_sec = follower_apply_delay_sec
 
@@ -43,12 +48,17 @@ class Cluster:
 
         self._bg_threads: List[threading.Thread] = []
         self._bg_lock = threading.Lock()
+        self._async_errors: List[str] = []
+        self._follower_locks: Dict[str, threading.Lock] = {
+            node.node_id: threading.Lock() for node in nodes
+        }
 
     # ----------------------------
     # Client API
     # ----------------------------
 
     def put(self, key: str, value: str) -> int:
+        self._raise_async_errors()
         leader = self.get_leader()
         index = self.next_index
         self.next_index += 1
@@ -67,6 +77,7 @@ class Cluster:
         return index
 
     def delete(self, key: str) -> int:
+        self._raise_async_errors()
         leader = self.get_leader()
         index = self.next_index
         self.next_index += 1
@@ -100,10 +111,12 @@ class Cluster:
                 alive_threads = [t for t in self._bg_threads if t.is_alive()]
                 self._bg_threads = alive_threads
                 if not self._bg_threads:
-                    return
+                    break
 
             for t in alive_threads:
                 t.join(timeout=0.01)
+
+        self._raise_async_errors()
 
     # ----------------------------
     # Replication internals
@@ -111,11 +124,15 @@ class Cluster:
 
     def _replicate_put_sync(self, index: int, key: str, value: str) -> None:
         for follower in self.get_followers():
-            self._replicate_to_one_follower(follower, index, "put", key, value)
+            self._replicate_to_one_follower_serialized(
+                follower, index, "put", key, value
+            )
 
     def _replicate_delete_sync(self, index: int, key: str) -> None:
         for follower in self.get_followers():
-            self._replicate_to_one_follower(follower, index, "delete", key, None)
+            self._replicate_to_one_follower_serialized(
+                follower, index, "delete", key, None
+            )
 
     def _replicate_put_async(self, index: int, key: str, value: str) -> None:
         for follower in self.get_followers():
@@ -134,7 +151,7 @@ class Cluster:
         value: Optional[str],
     ) -> None:
         thread = threading.Thread(
-            target=self._replicate_to_one_follower,
+            target=self._replicate_to_one_follower_async_safe,
             args=(follower, index, op, key, value),
             daemon=True,
         )
@@ -142,6 +159,22 @@ class Cluster:
 
         with self._bg_lock:
             self._bg_threads.append(thread)
+
+    def _replicate_to_one_follower_async_safe(
+        self,
+        follower: Node,
+        index: int,
+        op: str,
+        key: str,
+        value: Optional[str],
+    ) -> None:
+        try:
+            self._replicate_to_one_follower_serialized(follower, index, op, key, value)
+        except Exception as exc:
+            with self._bg_lock:
+                self._async_errors.append(
+                    f"Follower {follower.node_id} failed to apply index {index}: {exc}"
+                )
 
     def _replicate_to_one_follower(
         self,
@@ -153,6 +186,19 @@ class Cluster:
     ) -> None:
         self._maybe_delay_follower_apply()
         follower.apply_replication(index, op, key, value)
+
+    def _replicate_to_one_follower_serialized(
+        self,
+        follower: Node,
+        index: int,
+        op: str,
+        key: str,
+        value: Optional[str],
+    ) -> None:
+        # Preserve index order per follower while still allowing followers to
+        # replicate concurrently with each other.
+        with self._follower_locks[follower.node_id]:
+            self._replicate_to_one_follower(follower, index, op, key, value)
 
     def _maybe_delay_follower_apply(self) -> None:
         if self.follower_apply_delay_sec > 0:
@@ -219,3 +265,13 @@ class Cluster:
     def _compute_start_index(self) -> int:
         max_applied = max(node.last_applied_index for node in self.nodes.values())
         return max_applied + 1
+
+    def _raise_async_errors(self) -> None:
+        with self._bg_lock:
+            if not self._async_errors:
+                return
+
+            message = "; ".join(self._async_errors)
+            self._async_errors.clear()
+
+        raise RuntimeError(f"Async replication failed: {message}")

@@ -49,6 +49,9 @@ class Node:
 
     def get(self, key: str) ->Optional[str]:
         return self.kv.get(key)
+
+    def snapshot_dict(self) -> dict[str, str]:
+        return self.kv.snapshot_dict()
     
     # -----
     # Client writes (only the leader)
@@ -142,4 +145,3 @@ class Node:
             raise ValueError(
                 f"Node {self.node_id} is {self.role}, but {required} was required"
             )
-

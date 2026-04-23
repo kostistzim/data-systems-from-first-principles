@@ -1,7 +1,7 @@
 # src/mlstore_lite/storage/kvstore.py
 
 import os
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from .wal import WAL
 from .memtable import MemTable, TOMBSTONE
@@ -80,6 +80,33 @@ class KVStore:
 
         return None
 
+    def snapshot_dict(self) -> Dict[str, str]:
+        """
+        Return the current visible key/value state of the store.
+
+        This is mainly used by higher layers such as rebalancing logic that
+        need to inspect which live keys exist on a node.
+        """
+        visible: Dict[str, Optional[str]] = {}
+
+        # Apply older SSTables first so newer ones overwrite them.
+        for table in reversed(self.sstables):
+            for entry in table.iter_entries():
+                if entry.is_tombstone():
+                    visible[entry.key] = None
+                else:
+                    visible[entry.key] = entry.value
+
+        # MemTable always contains the newest in-memory state.
+        for key, value in self.mem.snapshot_dict().items():
+            visible[key] = value
+
+        return {
+            key: value
+            for key, value in visible.items()
+            if value is not None
+        }
+
     # ----------------------------
     # Internals: SSTables
     # ----------------------------
@@ -155,3 +182,5 @@ class KVStore:
         self.compactor.delete_tables(old)
 
         self._reset_wal()
+
+    
