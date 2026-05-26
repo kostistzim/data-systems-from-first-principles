@@ -9,10 +9,10 @@ At the moment, the code implementation is complete through:
 - Week 3: partitioning / sharding
 - Week 4: batch processing
 - Week 5-6: stream processing
+- Week 7: integration
 
 The later files remain placeholders because those parts of the system have not been implemented yet:
 
-- Week 7: integration
 - Week 8: evaluation
 
 ## How To Read These Notes
@@ -25,6 +25,7 @@ The notes are meant to be read in order:
 4. `week04-batch.md`
 5. `week05-stream.md`
 6. `week06-stream.md`
+7. `week07-integration.md`
 
 That order follows the architecture of the system itself:
 
@@ -34,6 +35,7 @@ single-node storage
     -> sharded distributed system
     -> batch feature computation
     -> stream feature updates
+    -> integrated MLStore-Lite prototype
 ```
 
 ## Current Project Story
@@ -52,10 +54,13 @@ So far, MLStore-Lite can:
 - append events to a stream log
 - track consumer offsets
 - update windowed stream features in the sharded replicated store
+- run batch and stream feature workflows through one integrated system object
+- perform manual shard failover experiments
+- run small local benchmarks
 
 ## Important Conceptual Layers
 
-The project now has five main implemented layers:
+The project now has six main implemented layers:
 
 ### 1. Storage layer
 
@@ -120,6 +125,17 @@ This answers:
 How do we update features as new events arrive?
 ```
 
+### 6. Integration layer
+
+- `MLStoreLiteSystem`
+- `create_mlstore_lite_system`
+
+This answers:
+
+```text
+How do all implemented layers work together as one prototype?
+```
+
 ## Current Intended Topology
 
 The current notes and examples use:
@@ -142,8 +158,11 @@ At the current stage, the implemented system is validated by:
 - sharding tests
 - batch tests
 - stream tests
+- integration tests
 - replication demo script
 - batch demo script
 - stream demo script
+- integration demo script
+- benchmark script
 
 So this directory now documents the full implemented part of the course, and the remaining weeks are still intentionally blank until that code exists.
