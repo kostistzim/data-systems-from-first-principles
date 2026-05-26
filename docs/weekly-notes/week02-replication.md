@@ -412,3 +412,40 @@ The main systems intuition is:
 - replication makes several nodes hold the same logical data
 
 That gives MLStore-Lite its first true distributed systems layer and prepares it for partitioning in the next phase.
+
+---
+
+## 16. Code Map
+
+The main Week 2 implementation lives in:
+
+- `src/mlstore_lite/replication/node.py`
+- `src/mlstore_lite/replication/cluster.py`
+- `src/mlstore_lite/experiments/week2_demo.py`
+
+What each file does:
+
+- `node.py`: wraps one local storage engine and gives it a replication role
+- `cluster.py`: coordinates leader/follower replication and failover
+- `week2_demo.py`: demonstrates async replication, sync replication, and failover behavior
+
+The storage layer from Week 1 is still being reused underneath every node.
+
+---
+
+## 17. How This Week Is Verified
+
+The main Week 2 verification pieces are:
+
+- `tests/test_replication.py`
+- `src/mlstore_lite/experiments/week2_demo.py`
+
+These cover:
+
+- sync replication
+- async stale reads
+- per-follower write ordering
+- delete replication
+- manual failover
+
+So Week 2 is documented both through tests and through a runnable demonstration script that lets you observe the tradeoffs directly.

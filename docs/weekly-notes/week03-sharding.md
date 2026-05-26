@@ -314,3 +314,43 @@ The most important intuition is:
 - partitioning = how the full keyspace is split across shards
 
 That gives the system its first scalable distributed architecture and prepares it for later batch and stream processing work.
+
+---
+
+## 13. Code Map
+
+The main Week 3 implementation lives in:
+
+- `src/mlstore_lite/sharding/hash_ring.py`
+- `src/mlstore_lite/sharding/sharded_cluster.py`
+- `tests/test_sharding.py`
+
+Supporting storage visibility for rebalancing also touches:
+
+- `src/mlstore_lite/storage/kvstore.py`
+
+What each file does:
+
+- `hash_ring.py`: consistent hashing and virtual-node ownership
+- `sharded_cluster.py`: shard groups, routing, request counting, and rebalancing
+- `test_sharding.py`: verifies routing, replication-through-shards, rebalancing, and load counters
+- `kvstore.py`: exposes a visible-state snapshot used by shard rebalancing
+
+---
+
+## 14. How This Week Is Verified
+
+The main Week 3 verification is:
+
+- `tests/test_sharding.py`
+
+This verifies:
+
+- stable routing through the hash ring
+- virtual-node setup
+- storing data through a routed shard
+- preserving replication inside a shard
+- rebalancing after adding a new shard
+- request counting for hotspot-style inspection
+
+At this stage there is no dedicated Week 3 demo script yet, but the tests already exercise the implemented partitioning behavior directly.

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from mlstore_lite.replication.cluster import Cluster
 
@@ -14,7 +14,7 @@ class ShardGroup:
     def put(self, key: str, value: str) -> int:
         return self.cluster.put(key, value)
 
-    def get(self, key: str) -> str | None:
+    def get(self, key: str) -> Optional[str]:
         return self.cluster.get_from_leader(key)
 
     def delete(self, key: str) -> int:
@@ -71,7 +71,7 @@ class ShardedCluster:
         index = self.shard_groups[shard_id].put(key, value)
         return shard_id, index
 
-    def get(self, key: str) -> str | None:
+    def get(self, key: str) -> Optional[str]:
         shard_id = self.get_shard_id(key)
         self._record_request(shard_id)
         return self.shard_groups[shard_id].get(key)

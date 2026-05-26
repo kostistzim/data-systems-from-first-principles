@@ -412,3 +412,40 @@ The storage engine uses:
 This gives the project a solid single-node base.
 
 The next natural step is replication: taking this one-node design and making several nodes keep consistent copies of the same data.
+
+---
+
+## 16. Code Map
+
+The main Week 1 implementation lives in:
+
+- `src/mlstore_lite/storage/wal.py`
+- `src/mlstore_lite/storage/memtable.py`
+- `src/mlstore_lite/storage/sstable.py`
+- `src/mlstore_lite/storage/compaction.py`
+- `src/mlstore_lite/storage/kvstore.py`
+
+What each file does:
+
+- `wal.py`: durable append-only logging and replay
+- `memtable.py`: newest in-memory state and tombstones
+- `sstable.py`: immutable sorted on-disk segments
+- `compaction.py`: merge several SSTables into one
+- `kvstore.py`: orchestrates the whole single-node storage engine
+
+---
+
+## 17. How This Week Is Verified
+
+The main Week 1 tests are:
+
+- `tests/test_recovery.py`
+- `tests/test_flush_and_compaction.py`
+
+These verify:
+
+- crash recovery through WAL replay
+- flushing from MemTable to SSTable
+- compaction preserving the newest visible values
+
+So Week 1 is not only conceptual. It is directly backed by runnable tests in the repository.
