@@ -10,9 +10,6 @@ At the moment, the code implementation is complete through:
 - Week 4: batch processing
 - Week 5-6: stream processing
 - Week 7: integration
-
-The later files remain placeholders because those parts of the system have not been implemented yet:
-
 - Week 8: evaluation
 
 ## How To Read These Notes
@@ -26,6 +23,7 @@ The notes are meant to be read in order:
 5. `week05-stream.md`
 6. `week06-stream.md`
 7. `week07-integration.md`
+8. `week08-evaluation.md`
 
 That order follows the architecture of the system itself:
 
@@ -36,6 +34,7 @@ single-node storage
     -> batch feature computation
     -> stream feature updates
     -> integrated MLStore-Lite prototype
+    -> local evaluation and observability
 ```
 
 ## Current Project Story
@@ -57,10 +56,14 @@ So far, MLStore-Lite can:
 - run batch and stream feature workflows through one integrated system object
 - perform manual shard failover experiments
 - run small local benchmarks
+- write structured observability logs
+- profile local operation runtimes
+- record reproducible evaluation results as JSON-lines
+- compare the prototype against production systems
 
 ## Important Conceptual Layers
 
-The project now has six main implemented layers:
+The project now has seven main implemented layers:
 
 ### 1. Storage layer
 
@@ -136,6 +139,19 @@ This answers:
 How do all implemented layers work together as one prototype?
 ```
 
+### 7. Evaluation and observability layer
+
+- `get_logger`
+- `timed`
+- `ExperimentLog`
+- `week8_evaluation.py`
+
+This answers:
+
+```text
+How do we inspect, measure, and explain the system we built?
+```
+
 ## Current Intended Topology
 
 The current notes and examples use:
@@ -159,10 +175,12 @@ At the current stage, the implemented system is validated by:
 - batch tests
 - stream tests
 - integration tests
+- observability tests
 - replication demo script
 - batch demo script
 - stream demo script
 - integration demo script
 - benchmark script
+- Week 8 evaluation script
 
-So this directory now documents the full implemented part of the course, and the remaining weeks are still intentionally blank until that code exists.
+So this directory now documents the implemented course project through Week 8.
