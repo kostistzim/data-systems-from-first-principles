@@ -2,6 +2,10 @@
 
 This directory is the running implementation diary for the course project.
 
+These notes are intentionally educational. They are meant to help a reader see
+how the system was built layer by layer, not to sound like polished corporate
+documentation.
+
 At the moment, the code implementation is complete through:
 
 - Week 1: storage engine
@@ -11,10 +15,17 @@ At the moment, the code implementation is complete through:
 - Week 5-6: stream processing
 - Week 7: integration
 - Week 8: evaluation
+- Week 9: online feature serving and model inference
 
 ## How To Read These Notes
 
-The notes are meant to be read in order:
+If you are new to the repository, start with:
+
+1. `../../README.md`
+2. `../architecture.md`
+3. `week01-storage.md`
+
+After that, the weekly notes are meant to be read in order:
 
 1. `week01-storage.md`
 2. `week02-replication.md`
@@ -24,6 +35,7 @@ The notes are meant to be read in order:
 6. `week06-stream.md`
 7. `week07-integration.md`
 8. `week08-evaluation.md`
+9. `week09-ai-inference.md`
 
 That order follows the architecture of the system itself:
 
@@ -35,7 +47,26 @@ single-node storage
     -> stream feature updates
     -> integrated MLStore-Lite prototype
     -> local evaluation and observability
+    -> online feature serving and model inference
 ```
+
+## Run This First
+
+The quickest way to check the project is:
+
+```text
+/opt/anaconda3/bin/python3 -m pytest -q
+PYTHONPATH=src python3 src/mlstore_lite/experiments/week8_evaluation.py
+PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
+```
+
+Use:
+
+```text
+docs/final-report-draft/final-report.md
+```
+
+as the report draft, and use this directory as the learning diary behind it.
 
 ## Current Project Story
 
@@ -60,10 +91,12 @@ So far, MLStore-Lite can:
 - profile local operation runtimes
 - record reproducible evaluation results as JSON-lines
 - compare the prototype against production systems
+- serve stored features to a small model inference layer
+- log model predictions as JSON-lines records
 
 ## Important Conceptual Layers
 
-The project now has seven main implemented layers:
+The project now has eight main implemented layers:
 
 ### 1. Storage layer
 
@@ -152,6 +185,19 @@ This answers:
 How do we inspect, measure, and explain the system we built?
 ```
 
+### 8. Online feature serving and model inference layer
+
+- `FeatureServer`
+- `PurchaseIntentModel`
+- `InferenceService`
+- `PredictionLog`
+
+This answers:
+
+```text
+How can a model consume the features stored by MLStore-Lite?
+```
+
 ## Current Intended Topology
 
 The current notes and examples use:
@@ -176,11 +222,13 @@ At the current stage, the implemented system is validated by:
 - stream tests
 - integration tests
 - observability tests
+- AI inference tests
 - replication demo script
 - batch demo script
 - stream demo script
 - integration demo script
 - benchmark script
 - Week 8 evaluation script
+- Week 9 AI inference demo
 
-So this directory now documents the implemented course project through Week 8.
+So this directory now documents the implemented course project through Week 9.
