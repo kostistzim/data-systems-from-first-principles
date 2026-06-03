@@ -1,0 +1,121 @@
+\section{Introduction}
+
+Modern machine learning systems depend on data infrastructure that can store
+features, update them from new events, and recover from failures. The goal of
+MLStore-Lite is to build a small educational prototype of such a system. The
+project is inspired by the distributed data-system concepts from \textit{Designing
+Data-Intensive Applications}, but keeps the implementation local and readable.
+
+The project does not attempt to compete with production systems such as RocksDB,
+Cassandra, Kafka, Spark, or Flink. Instead, it implements compact versions of
+their central ideas. This makes the internal architecture easier to inspect:
+write-ahead logging, sorted-string tables, replication, partitioning, batch
+processing, stream processing, and observability can all be studied in one code
+base.
+
+The final system can run a small feature workflow end to end. Raw historical
+events are converted into batch features, new events are appended to a stream
+log, stream consumers update windowed features, and all feature values are
+stored in a sharded replicated key-value store. The last layer adds local
+evaluation and observability so the system can be measured and explained.
+
+\section{System Overview}
+
+MLStore-Lite is organized as a layered system. Each layer has a narrow
+responsibility and builds on the layer below it:
+
+\begin{verbatim}
+Storage engine
+  -> Replication
+  -> Sharding / partitioning
+  -> Batch processing
+  -> Stream processing
+  -> Integration
+  -> Evaluation and observability
+\end{verbatim}
+
+This structure is useful because it separates concerns. The storage engine only
+needs to know how one node persists key-value data. The replication layer only
+needs to know how several nodes keep copies of the same data. The sharding layer
+only decides which replicated group owns a key. Batch and stream processing then
+use the sharded store without needing to understand the lower-level storage
+details.
+
+\subsection{Storage Engine}
+
+The storage engine answers the question: how does one node store data durably?
+It consists of a write-ahead log, an in-memory table, immutable SSTable files,
+and compaction.
+
+When a key is written, the value is first appended to the write-ahead log. This
+means the operation can be recovered even if the process crashes before the
+in-memory data is flushed to disk. The in-memory table keeps recent writes fast.
+When it grows large enough, it is flushed into an SSTable file. SSTables are
+immutable sorted files, which makes reads and merges more predictable.
+Compaction later combines SSTables and removes overwritten values.
+
+This is a simplified log-structured storage engine. The same broad idea appears
+in systems such as LevelDB and RocksDB, although production engines add many
+optimizations such as bloom filters, compression, concurrency control, and more
+advanced compaction strategies.
+
+\subsection{Replication}
+
+The replication layer answers the question: how can the system keep multiple
+copies of the same data? MLStore-Lite uses a leader-follower model. Each
+replicated group contains one leader and two followers, giving a replication
+factor of three.
+
+Writes go to the leader. The leader stores the write locally and forwards it to
+followers. Reads are served through the current leader in the implemented
+interface. The project also supports manual failover, where a follower can be
+promoted to leader after a failure experiment.
+
+Replication improves fault tolerance because one physical copy is no longer the
+only place where data exists. In this prototype the replicas are local objects
+and directories, not separate networked machines. This keeps the focus on the
+data-system concept rather than on networking.
+
+\subsection{Sharding and Partitioning}
+
+Replication creates copies of the same data. Sharding divides different keys
+across different replicated groups. This answers the question: which shard owns
+this key?
+
+MLStore-Lite uses consistent hashing for routing. A key is hashed onto a ring,
+and the next shard on the ring owns that key. This means keys can be distributed
+without manually assigning ranges such as ``users 1--1000 go to shard A''. When
+a shard is added, only part of the key space needs to move.
+
+In the implemented topology, each shard is itself a replicated group with
+replication factor three. Therefore a shard is not just one file or one Python
+object. It is a logical partition of the key space, backed by multiple replica
+nodes.
+
+\subsection{Batch Processing}
+
+The batch layer answers the question: how can raw historical records be turned
+into useful derived data? In MLStore-Lite, the derived data are machine-learning
+style features.
+
+The batch engine follows a small MapReduce pattern:
+
+\begin{verbatim}
+map -> shuffle -> reduce
+\end{verbatim}
+
+The map step reads one input event and emits intermediate key-value pairs. The
+shuffle step groups intermediate values by feature key. The reduce step combines
+the grouped values into final feature values. For example, several click events
+for the same user can become a single click-count feature.
+
+The implemented batch feature job computes per-user event counts, click counts,
+purchase counts, and total purchase amount. The results are written back into
+the sharded replicated store using keys such as:
+
+\begin{verbatim}
+feature:user:42:click_count
+\end{verbatim}
+
+This mirrors the role of batch systems such as MapReduce and Spark, but at a
+small local scale.

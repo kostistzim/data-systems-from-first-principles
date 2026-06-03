@@ -1,0 +1,152 @@
+\section{Stream Processing and Integration}
+
+Batch processing is useful for historical data, but many ML systems also need
+fresh features from recent events. The stream layer answers the question: how
+can new events update derived data incrementally?
+
+MLStore-Lite implements a small append-only event log, producers, consumers, an
+offset store, tumbling windows, and a stream feature processor. Producers append
+events to the log. Consumers read from the log and track their position using
+offsets. The processor groups events into fixed-size windows and writes updated
+features into the same sharded replicated store used by the batch layer.
+
+This is similar in spirit to Kafka and stream processors such as Flink or Kafka
+Streams. Kafka provides the durable distributed event log, while Flink and Kafka
+Streams provide continuous computations over event streams. MLStore-Lite keeps a
+small local version of the same idea: new events are appended, consumed, grouped,
+and converted into feature updates.
+
+\subsection{Integrated System}
+
+The integration layer connects all previous components into one object:
+
+\begin{verbatim}
+MLStoreLiteSystem
+\end{verbatim}
+
+This object creates the sharded replicated store, the batch feature job, the
+event log, producer, consumer, offset store, and stream processor. Its purpose is
+not to hide the architecture, but to make the whole prototype runnable without
+manually wiring every class each time.
+
+The integrated system supports the following workflow:
+
+\begin{enumerate}
+    \item compute batch features from historical events;
+    \item produce new events into the stream log;
+    \item process stream events into windowed features;
+    \item read features from the sharded replicated store;
+    \item inspect shard distribution and replica status.
+\end{enumerate}
+
+This gives the project an end-to-end ML infrastructure story: raw events become
+features, and the features are stored in a distributed-system-inspired storage
+backend.
+
+\section{Evaluation and Observability}
+
+The evaluation layer adds local observability. In this project, observability
+means structured logs, timing measurements, and reproducible experiment records.
+The goal is not to build a monitoring platform. The goal is to make the
+prototype inspectable.
+
+The Week 8 evaluation script builds the integrated system and measures:
+
+\begin{itemize}
+    \item batch feature computation time;
+    \item stream event production time;
+    \item stream processing time;
+    \item feature read latency;
+    \item key distribution across shards.
+\end{itemize}
+
+Each measurement is written to a JSON-lines file with an experiment name,
+metric, value, unit, timestamp, and parameters. The parameters include the
+number of events, number of shards, and replication factor. This is important
+for reproducibility: a runtime number is more meaningful when the conditions
+that produced it are also recorded.
+
+The evaluation script also emits structured JSON logs. A structured log is more
+useful than plain text because it can be parsed by other tools. For example, the
+system can log that a measurement was recorded together with the operation name,
+elapsed time, and output count.
+
+\section{Online Feature Serving and Model Inference}
+
+The final extension adds a small online inference layer. This layer uses the
+features computed by the batch and stream processors and serves them to a
+deterministic purchase-intent model.
+
+The feature server reads expected user features from MLStore-Lite, including
+historical batch features and recent windowed stream features. It also records
+whether expected inputs are missing. The model uses the feature values to
+produce a purchase probability, but also reports a confidence value and warnings
+when serving-time inputs are unavailable.
+
+This is intentionally not a large model-training system. The purpose is to show
+the role of the data infrastructure in model serving:
+
+\begin{verbatim}
+events -> features -> feature store -> online inference -> prediction log
+\end{verbatim}
+
+Predictions are written to a JSON-lines log with the user id, model version,
+input features, prediction probability, confidence, label, and warnings. This
+connects the AI extension back to MLOps: model outputs should be traceable and
+debuggable, not just returned and forgotten.
+
+\section{Comparison With Production Tools}
+
+MLStore-Lite is a teaching prototype, so the comparison with production systems
+is conceptual rather than a performance benchmark.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{p{0.28\linewidth} p{0.25\linewidth} p{0.34\linewidth}}
+\hline
+\textbf{MLStore-Lite layer} & \textbf{Production reference} & \textbf{Shared idea} \\
+\hline
+Storage engine & RocksDB / LevelDB & WAL, memtable, SSTables, compaction \\
+Sharding and replication & Cassandra & partitioned key space, replicated data \\
+Event log & Kafka & append-only events, producers, consumers, offsets \\
+Batch processing & Spark / MapReduce & map, shuffle, reduce over finite data \\
+Stream processing & Flink / Kafka Streams & continuous event processing and windowed state \\
+Integrated workflow & Databricks / managed platforms & end-to-end data and ML infrastructure \\
+Inference extension & Feature stores / model serving systems & online feature retrieval and prediction logging \\
+\hline
+\end{tabular}
+\caption{Conceptual comparison between MLStore-Lite and production systems.}
+\end{table}
+
+The main difference is scale and operational complexity. Production tools run
+across real machines, handle concurrent users, recover from many failure modes,
+and optimize for performance. MLStore-Lite runs locally and focuses on making
+the core ideas understandable.
+
+\section{Limitations}
+
+The most important limitation is that the project is local. Nodes are Python
+objects and directories, not independent networked processes. There is no real
+network transport, automatic leader election, background repair, distributed
+query execution, or production-grade monitoring.
+
+The evaluation is also intentionally small. The measurements are useful for
+checking that the system runs and for discussing relative behavior, but they are
+not benchmarks against real systems. The synthetic workloads are small enough to
+keep the project readable and runnable on a laptop.
+
+These limitations are acceptable because the goal is educational. The project
+prioritizes clarity of architecture over production completeness.
+
+\section{Conclusion}
+
+MLStore-Lite implements a compact data infrastructure prototype for ML-style
+features. The project starts from a single-node storage engine and gradually
+adds replication, sharding, batch processing, stream processing, integration,
+observability, and online model inference.
+
+The final result shows how raw events can become derived feature values, and how
+those values can be stored in a sharded replicated backend, served to a model,
+and logged as predictions. It also shows why evaluation and observability
+matter: once a system has several layers, it needs logs, measurements, and
+reproducible records to be understandable.

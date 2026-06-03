@@ -1,0 +1,28 @@
+# Final Report Draft
+
+This folder contains a compact LaTeX draft for the final MLStore-Lite report.
+
+The user's DTU template imports:
+
+```tex
+\import{}{Content/Part1.tex}
+\import{}{Content/Part2.tex}
+```
+
+The files in this folder follow that structure:
+
+- `Content/Part1.tex`
+- `Content/Part2.tex`
+
+The draft is intentionally concise so it can fit within a 10-page limit after
+front page, table of contents, and formatting are applied.
+
+Suggested page budget:
+
+- front page and table of contents: template-controlled
+- Part 1: about 3-4 pages
+- Part 2: about 3-4 pages
+- optional references/appendix: only if required
+
+Avoid adding long code listings to the main report. Use short architectural
+snippets and refer to the repository for implementation details.
