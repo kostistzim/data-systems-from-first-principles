@@ -43,13 +43,41 @@ managed platforms, and operational tradeoffs.
 
 The main DDIA reading and implementation mapping was:
 
-| DDIA area | Project week | Implemented focus |
-|---|---:|---|
-| Chapter 3: Storage Engines | Week 1 | Write-ahead log, memtable, SSTable-like files, compaction, recovery |
-| Chapter 5: Replication | Week 2 | Leader-follower replication, sync/async writes, replication lag, manual failover |
-| Chapter 6: Sharding / Data Distribution | Week 3 | Hash-based partitioning, consistent hashing, virtual nodes, rebalancing, routing |
-| Chapter 10: Batch Processing | Week 4 | Map-shuffle-reduce dataflow, retries, batch feature computation |
-| Chapter 11: Stream Processing | Weeks 5-6 | Append-only event log, producers, consumers, offsets, tumbling-window features |
+| Milestone | Main DDIA connection | What was implemented |
+|---|---|---|
+| Week 1: Storage engine | Chapter 3: Storage and Retrieval | Write-ahead log, memtable, SSTable-like files, compaction, and crash recovery |
+| Week 2: Replication | Chapter 5: Replication | Leader-follower replication, synchronous/asynchronous writes, replication lag, and manual failover |
+| Week 3: Sharding / partitioning | Chapter 6: Partitioning | Hash-based partitioning, consistent hashing, virtual nodes, request routing, and rebalancing |
+| Week 4: Batch processing | Chapter 10: Batch Processing | Local MapReduce-style `map -> shuffle -> reduce` engine and batch feature computation |
+| Weeks 5-6: Stream processing | Chapter 11: Stream Processing | Append-only event log, producers, consumers, offsets, tumbling windows, and stream feature updates |
+| Week 7: Integration | DDIA system-design theme: composing storage and processing systems | One `MLStoreLiteSystem` that wires storage, replication, sharding, batch, and stream layers together |
+| Week 8: Evaluation and observability | DDIA operational theme: understanding tradeoffs and system behavior | Structured logs, timing measurements, JSON-lines experiment records, and comparison with production tools |
+| Week 9: Online feature serving and inference | Extension from data systems into ML infrastructure | Feature serving, deterministic model inference, confidence/warning output, and prediction logging |
+| Week 10: Scaling and cloud design | DDIA partitioning/replication/processing tradeoffs revisited | Workload scaling experiment, shard hotspot experiment, and cloud architecture design sketch |
+
+More specifically, the implementation was guided by the following DDIA sections
+and ideas:
+
+| Project part | DDIA section or subsection theme | How it appears in MLStore-Lite |
+|---|---|---|
+| Write path and recovery | Chapter 3: log-structured storage, write-ahead logs, and storage-engine internals | Writes are appended to a WAL before being stored in memory, so a node can recover after restart |
+| MemTable and SSTables | Chapter 3: SSTables and LSM-trees | Recent writes live in a memtable and are flushed into immutable sorted files |
+| Compaction | Chapter 3: merging and compaction in log-structured storage | Multiple SSTable-like files are merged so newer values replace older values |
+| Leader-follower replication | Chapter 5: leaders and followers | A leader accepts writes and forwards them to follower replicas |
+| Sync vs async replication | Chapter 5: synchronous versus asynchronous replication | The cluster supports both synchronous and asynchronous replication modes |
+| Replication lag | Chapter 5: problems with replication lag | Async followers may temporarily be behind the leader |
+| Failover | Chapter 5: handling node outages and failover | The project implements manual follower promotion, not automatic consensus |
+| Partitioning by hash | Chapter 6: partitioning key-value data by hash of key | Feature keys are routed to shards using a hash ring |
+| Virtual nodes | Chapter 6: rebalancing and partition distribution | Each shard appears multiple times on the ring to improve distribution |
+| Hotspots | Chapter 6: skewed workloads and relieving hot spots | Week 10 compares balanced and hotspot workloads and records request pressure |
+| Request routing | Chapter 6: request routing to partitions | `ShardedCluster` decides which shard owns each key |
+| Batch dataflow | Chapter 10: MapReduce-style batch processing | The batch engine implements `map -> shuffle -> reduce` locally |
+| Derived data | Chapter 10: outputs of batch workflows and derived views | Raw events are transformed into stored feature values |
+| Event logs | Chapter 11: transmitting event streams and log-based messaging | Producers append events to a local event log |
+| Consumers and offsets | Chapter 11: consumers, offsets, and partitioned logs | Consumers track how far they have read using an offset store |
+| Windowed stream processing | Chapter 11: stream processing and reasoning about time | Events are grouped into tumbling windows before updating features |
+| Observability and evaluation | DDIA's recurring emphasis on tradeoffs, operational behavior, and failure modes | Week 8 records timings, JSON-lines experiment results, and limitations |
+| Cloud design | DDIA's broader discussion of data systems as composed services | Week 10 maps the local layers to possible cloud services such as Kafka, Spark, Flink, Cassandra, and model serving |
 
 Several DDIA topics were intentionally not implemented deeply. Transactions,
 consensus, automatic leader election, distributed commit protocols, real
@@ -399,6 +427,15 @@ The evaluation is also intentionally small. The measurements are useful for
 checking that the system runs and for discussing relative behavior, but they are
 not benchmarks against real systems. The synthetic workloads are small enough to
 keep the project readable and runnable on a laptop.
+
+As a final extension, I added local scaling and hotspot experiments. These
+experiments increase event counts and compare balanced versus skewed workloads.
+They still run locally, but they make scaling questions more concrete: runtime
+grows with input size, and hash partitioning does not automatically remove all
+request skew. A cloud version would keep the same conceptual flow but replace
+local files and Python objects with services such as event streaming, distributed
+batch/stream processing, distributed feature storage, model serving, and central
+observability.
 
 These limitations are acceptable because the goal is educational. The project
 prioritizes clarity of architecture over production completeness.

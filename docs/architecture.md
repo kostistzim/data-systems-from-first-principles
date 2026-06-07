@@ -85,3 +85,16 @@ The demos use:
 
 This keeps the implementation small enough to study while still showing the
 core architecture of a larger data system.
+
+## Scaling Thoughts
+
+The project now includes local Week 10 experiments for workload scaling and
+shard hotspots. These experiments do not make MLStore-Lite a production
+distributed system, but they help show what would become important as workload
+size and request skew grow.
+
+For a possible cloud version of the same architecture, see:
+
+```text
+docs/cloud-architecture.md
+```

@@ -16,6 +16,7 @@ At the moment, the code implementation is complete through:
 - Week 7: integration
 - Week 8: evaluation
 - Week 9: online feature serving and model inference
+- Week 10: local scaling experiments and cloud architecture
 
 ## How To Read These Notes
 
@@ -36,6 +37,7 @@ After that, the weekly notes are meant to be read in order:
 7. `week07-integration.md`
 8. `week08-evaluation.md`
 9. `week09-ai-inference.md`
+10. `week10-scaling-and-cloud.md`
 
 That order follows the architecture of the system itself:
 
@@ -48,6 +50,7 @@ single-node storage
     -> integrated MLStore-Lite prototype
     -> local evaluation and observability
     -> online feature serving and model inference
+    -> local scaling experiments and cloud design
 ```
 
 ## Run This First
@@ -58,6 +61,8 @@ The quickest way to check the project is:
 /opt/anaconda3/bin/python3 -m pytest -q
 PYTHONPATH=src python3 src/mlstore_lite/experiments/week8_evaluation.py
 PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
+PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_scaling_experiment.py
+PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_hotspot_experiment.py
 ```
 
 Use:
@@ -93,10 +98,12 @@ So far, MLStore-Lite can:
 - compare the prototype against production systems
 - serve stored features to a small model inference layer
 - log model predictions as JSON-lines records
+- run local scaling and shard-hotspot experiments
+- describe a possible cloud version of the architecture
 
 ## Important Conceptual Layers
 
-The project now has eight main implemented layers:
+The project now has eight main implemented layers plus one scaling/design extension:
 
 ### 1. Storage layer
 
@@ -198,6 +205,18 @@ This answers:
 How can a model consume the features stored by MLStore-Lite?
 ```
 
+### Week 10 scaling/design extension
+
+- workload scaling experiment
+- shard hotspot experiment
+- cloud architecture sketch
+
+This answers:
+
+```text
+How would this local prototype behave under larger or skewed workloads, and what would a cloud version look like?
+```
+
 ## Current Intended Topology
 
 The current notes and examples use:
@@ -230,5 +249,7 @@ At the current stage, the implemented system is validated by:
 - benchmark script
 - Week 8 evaluation script
 - Week 9 AI inference demo
+- Week 10 scaling experiment
+- Week 10 hotspot experiment
 
-So this directory now documents the implemented course project through Week 9.
+So this directory now documents the implemented course project through Week 10.

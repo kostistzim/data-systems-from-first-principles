@@ -22,6 +22,7 @@ storage
   -> integration
   -> observability
   -> online feature serving and inference
+  -> local scaling experiments
 ```
 
 In practical terms:
@@ -62,6 +63,13 @@ Run the Week 9 AI inference demo:
 PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
 ```
 
+Run the Week 10 scaling experiments:
+
+```bash
+PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_scaling_experiment.py
+PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_hotspot_experiment.py
+```
+
 `PYTHONPATH=src` tells Python to import the local package from `src/mlstore_lite`.
 
 ## Repo Map
@@ -69,7 +77,8 @@ PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
 - `src/mlstore_lite/`: implementation code
 - `tests/`: unit and integration tests
 - `docs/architecture.md`: compact architecture overview
-- `docs/weekly-notes/`: learning notes for Weeks 1-9
+- `docs/cloud-architecture.md`: possible cloud version of the architecture
+- `docs/weekly-notes/`: learning notes for Weeks 1-10
 - `docs/final-report-draft/`: report draft and supporting material
 
 Generated demo output goes under `demo_data/`. It is useful for inspection, but

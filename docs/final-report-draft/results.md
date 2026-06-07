@@ -87,3 +87,75 @@ the system can:
 - process stream updates
 - read features for inference
 - log measurements and predictions
+
+## Week 10 Workload Scaling
+
+Command:
+
+```bash
+PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_scaling_experiment.py
+```
+
+Representative output:
+
+```text
+events | batch_s | produce_s | process_s | read_s | keys | distribution
+   250 | 0.010543 | 0.013034 | 0.089711 | 0.000102 |  346 | {'shard-a': 167, 'shard-b': 179}
+  1000 | 0.022959 | 0.050308 | 1.221772 | 0.000088 | 1979 | {'shard-a': 948, 'shard-b': 1031}
+  2500 | 0.058198 | 0.130416 | 7.259344 | 0.000064 | 5633 | {'shard-a': 2671, 'shard-b': 2962}
+```
+
+Interpretation:
+
+- the experiment is local and single-process, so it is not a production scaling
+  benchmark
+- increasing the workload makes stream processing noticeably more expensive
+- feature read latency remains small because the read is one local lookup
+- shard key distribution stays reasonably balanced for this synthetic workload
+
+The generated experiment log is:
+
+```text
+demo_data/week10/scaling/results.jsonl
+```
+
+## Week 10 Shard Hotspot Experiment
+
+Command:
+
+```bash
+PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_hotspot_experiment.py
+```
+
+Representative output:
+
+```text
+Workload: balanced
+produce_s=0.048879
+process_s=1.275851
+event_pressure={'shard-a': 477, 'shard-b': 523}
+key_distribution={'shard-a': 960, 'shard-b': 1040}
+request_counts={'shard-a': 1920, 'shard-b': 2080}
+
+Workload: hotspot
+produce_s=0.051197
+process_s=0.141293
+event_pressure={'shard-a': 379, 'shard-b': 621}
+key_distribution={'shard-a': 218, 'shard-b': 216}
+request_counts={'shard-a': 436, 'shard-b': 432}
+```
+
+Interpretation:
+
+- `event_pressure` estimates where raw events would route before aggregation
+- `request_counts` shows actual store requests after the stream processor
+  aggregates events into feature deltas
+- the hotspot workload sends more raw event pressure toward `shard-b`
+- the final store writes are less skewed because many hot-user events collapse
+  into fewer windowed feature keys
+
+The generated experiment log is:
+
+```text
+demo_data/week10/hotspot/results.jsonl
+```
