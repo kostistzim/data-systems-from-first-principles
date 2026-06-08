@@ -57,7 +57,7 @@ How does this Python prototype behave as the input size grows?
 Run it with:
 
 ```text
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_scaling_experiment.py
+python -m mlstore_lite.experiments.week10_scaling_experiment
 ```
 
 Generated results:
@@ -84,7 +84,7 @@ receive much more traffic than other shards.
 Run it with:
 
 ```text
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_hotspot_experiment.py
+python -m mlstore_lite.experiments.week10_hotspot_experiment
 ```
 
 Generated results:
@@ -161,10 +161,10 @@ the implementation too much.
 Run:
 
 ```text
-/opt/anaconda3/bin/python3 -m pytest -q
-PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python3 -m compileall src tests
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_scaling_experiment.py
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_hotspot_experiment.py
+python -m pytest -q
+PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python -m compileall src tests
+python -m mlstore_lite.experiments.week10_scaling_experiment
+python -m mlstore_lite.experiments.week10_hotspot_experiment
 ```
 
 Expected result:

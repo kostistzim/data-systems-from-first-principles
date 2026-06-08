@@ -236,7 +236,7 @@ The tests verify:
 The runnable demo is:
 
 ```text
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week5_stream_demo.py
+python -m mlstore_lite.experiments.week5_stream_demo
 ```
 
 It shows events being produced, offsets advancing, features being updated, and shard replica status.

@@ -301,7 +301,7 @@ This verifies:
 The runnable demo is:
 
 ```text
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week4_demo.py
+python -m mlstore_lite.experiments.week4_demo
 ```
 
 That demo shows raw events, computed feature outputs, shard placement, and replica status.

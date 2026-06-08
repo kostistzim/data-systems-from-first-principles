@@ -13,7 +13,7 @@ observations.
 Command:
 
 ```bash
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week8_evaluation.py
+python -m mlstore_lite.experiments.week8_evaluation
 ```
 
 Representative output:
@@ -49,7 +49,7 @@ demo_data/week8/evaluation/results.jsonl
 Command:
 
 ```bash
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
+python -m mlstore_lite.experiments.week9_ai_inference_demo
 ```
 
 Representative prediction output:
@@ -93,7 +93,7 @@ the system can:
 Command:
 
 ```bash
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_scaling_experiment.py
+python -m mlstore_lite.experiments.week10_scaling_experiment
 ```
 
 Representative output:
@@ -124,7 +124,7 @@ demo_data/week10/scaling/results.jsonl
 Command:
 
 ```bash
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_hotspot_experiment.py
+python -m mlstore_lite.experiments.week10_hotspot_experiment
 ```
 
 Representative output:

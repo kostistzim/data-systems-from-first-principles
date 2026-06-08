@@ -39,38 +39,58 @@ The current local topology uses:
 
 ## Quickstart
 
+Create a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the project:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
 Run the full test suite:
 
 ```bash
-/opt/anaconda3/bin/python3 -m pytest -q
+python -m pytest -q
 ```
 
-Run the compile check:
+Optionally run the compile check on macOS/Linux:
 
 ```bash
-PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python3 -m compileall src tests
+PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python -m compileall src tests
+```
+
+On Windows PowerShell, activate the virtual environment with:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
 Run the Week 8 evaluation script:
 
 ```bash
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week8_evaluation.py
+python -m mlstore_lite.experiments.week8_evaluation
 ```
 
 Run the Week 9 AI inference demo:
 
 ```bash
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
+python -m mlstore_lite.experiments.week9_ai_inference_demo
 ```
 
 Run the Week 10 scaling experiments:
 
 ```bash
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_scaling_experiment.py
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_hotspot_experiment.py
+python -m mlstore_lite.experiments.week10_scaling_experiment
+python -m mlstore_lite.experiments.week10_hotspot_experiment
 ```
 
-`PYTHONPATH=src` tells Python to import the local package from `src/mlstore_lite`.
+The old development commands used `PYTHONPATH=src`, but installing the project
+with `python -m pip install -r requirements.txt` makes that unnecessary.
 
 ## Repo Map
 

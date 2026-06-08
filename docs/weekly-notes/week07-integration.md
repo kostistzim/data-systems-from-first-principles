@@ -234,8 +234,8 @@ The tests verify:
 The runnable demos are:
 
 ```text
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week7_integration_demo.py
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week7_benchmark.py
+python -m mlstore_lite.experiments.week7_integration_demo
+python -m mlstore_lite.experiments.week7_benchmark
 ```
 
 ---

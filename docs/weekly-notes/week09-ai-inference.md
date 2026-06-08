@@ -249,7 +249,7 @@ user ids
 Run it with:
 
 ```text
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
+python -m mlstore_lite.experiments.week9_ai_inference_demo
 ```
 
 The generated prediction log is:
@@ -289,9 +289,9 @@ That keeps the extension connected to the rest of MLStore-Lite.
 The main verification commands are:
 
 ```text
-/opt/anaconda3/bin/python3 -m pytest -q
-PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python3 -m compileall src tests
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
+python -m pytest -q
+PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python -m compileall src tests
+python -m mlstore_lite.experiments.week9_ai_inference_demo
 ```
 
 The expected result is:

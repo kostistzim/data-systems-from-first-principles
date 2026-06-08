@@ -242,7 +242,7 @@ record not just the result, but also the conditions that produced the result.
 The main Week 8 script is:
 
 ```text
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week8_evaluation.py
+python -m mlstore_lite.experiments.week8_evaluation
 ```
 
 It does the following:
@@ -552,9 +552,9 @@ What each file does:
 The main verification commands are:
 
 ```text
-/opt/anaconda3/bin/python3 -m pytest -q
-PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python3 -m compileall src tests
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week8_evaluation.py
+python -m pytest -q
+PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python -m compileall src tests
+python -m mlstore_lite.experiments.week8_evaluation
 ```
 
 The expected result is:

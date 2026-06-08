@@ -58,11 +58,11 @@ single-node storage
 The quickest way to check the project is:
 
 ```text
-/opt/anaconda3/bin/python3 -m pytest -q
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week8_evaluation.py
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week9_ai_inference_demo.py
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_scaling_experiment.py
-PYTHONPATH=src python3 src/mlstore_lite/experiments/week10_hotspot_experiment.py
+python -m pytest -q
+python -m mlstore_lite.experiments.week8_evaluation
+python -m mlstore_lite.experiments.week9_ai_inference_demo
+python -m mlstore_lite.experiments.week10_scaling_experiment
+python -m mlstore_lite.experiments.week10_hotspot_experiment
 ```
 
 Use:
