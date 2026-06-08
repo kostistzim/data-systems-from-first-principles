@@ -52,6 +52,10 @@ Install the project:
 python -m pip install -r requirements.txt
 ```
 
+Packaging is defined in `pyproject.toml`. The `requirements.txt` file is only a
+small convenience wrapper for installing the project with its development
+dependency, `pytest`.
+
 Run the full test suite:
 
 ```bash
