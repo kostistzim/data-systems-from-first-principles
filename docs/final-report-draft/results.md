@@ -88,6 +88,47 @@ the system can:
 - read features for inference
 - log measurements and predictions
 
+## Final End-To-End Demo
+
+Command:
+
+```bash
+python -m mlstore_lite.experiments.final_demo
+```
+
+Representative output:
+
+```text
+batch_events=20
+batch_features_written=10
+stream_events=10
+stream_features_written=18
+consumer_offset=10
+
+Shard distribution:
+{'shard-a': 16, 'shard-b': 12}
+
+Predictions:
+user=0 probability=0.9953 confidence=1.0000 label=likely_to_purchase warnings=[]
+user=1 probability=0.5125 confidence=1.0000 label=maybe_interested warnings=[]
+user=2 probability=0.1483 confidence=0.5600 label=low_intent warnings=['missing_purchase_count', 'missing_total_purchase_amount', 'no_recent_stream_activity']
+user=999 probability=0.0989 confidence=0.3200 label=uncertain warnings=['missing_event_count', 'missing_click_count', 'missing_purchase_count', 'missing_total_purchase_amount', 'no_recent_stream_activity']
+```
+
+Interpretation:
+
+- the terminal demo exercises batch processing, stream processing, sharded
+  replicated storage, feature serving, inference, and prediction logging
+- user `0` has strong historical and recent activity
+- user `999` has no stored features, so the model reports low confidence and an
+  `uncertain` label
+
+Generated output:
+
+```text
+demo_data/final_demo/predictions.jsonl
+```
+
 ## Week 10 Workload Scaling
 
 Command:

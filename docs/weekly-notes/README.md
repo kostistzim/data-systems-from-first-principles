@@ -63,6 +63,7 @@ python -m mlstore_lite.experiments.week8_evaluation
 python -m mlstore_lite.experiments.week9_ai_inference_demo
 python -m mlstore_lite.experiments.week10_scaling_experiment
 python -m mlstore_lite.experiments.week10_hotspot_experiment
+python -m mlstore_lite.experiments.final_demo
 ```
 
 Use:

@@ -22,6 +22,8 @@ events are converted into batch features, new events are appended to a stream
 log, stream consumers update windowed features, and all feature values are
 stored in a sharded replicated key-value store. The final extension serves those
 features to a small model inference layer and logs predictions for inspection.
+The full local pipeline can be reproduced with one terminal command:
+`python -m mlstore_lite.experiments.final_demo`.
 
 This project is also personal learning work. Coming from a mathematics
 background and having worked with code for a bit less than two years, I wanted

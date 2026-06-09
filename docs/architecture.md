@@ -3,22 +3,6 @@
 MLStore-Lite is a local educational prototype of a feature platform. It builds
 from storage internals up to online model inference.
 
-## System Flow
-
-```mermaid
-flowchart TD
-    A[Raw events] --> B[Batch feature computation]
-    A --> C[Stream event log]
-    C --> D[Stream feature processor]
-    B --> E[Sharded replicated feature store]
-    D --> E
-    E --> F[Online feature server]
-    F --> G[Purchase intent model]
-    G --> H[Prediction log]
-    E --> I[Evaluation and observability]
-    H --> I
-```
-
 ## Layers
 
 ### 1. Storage
@@ -92,6 +76,12 @@ The project now includes local Week 10 experiments for workload scaling and
 shard hotspots. These experiments do not make MLStore-Lite a production
 distributed system, but they help show what would become important as workload
 size and request skew grow.
+
+The easiest way to see the full local pipeline is:
+
+```text
+python -m mlstore_lite.experiments.final_demo
+```
 
 For a possible cloud version of the same architecture, see:
 
