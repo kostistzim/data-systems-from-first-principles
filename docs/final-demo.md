@@ -29,35 +29,26 @@ python -m mlstore_lite.experiments.final_demo
 This is the recommended grading/submission path because it has no optional UI
 dependency.
 
-## Optional Streamlit Project Viewer
+## What To Inspect
 
-Install the optional UI dependency:
+After running the demo, look for:
 
-```bash
-python -m pip install ".[ui]"
-```
+- batch feature counts
+- stream feature counts
+- consumer offset
+- shard distribution
+- prediction probabilities
+- prediction warnings for missing or incomplete feature context
 
-Run:
+These outputs are intentionally small. The goal is to make the architecture
+visible, not to benchmark performance.
 
-```bash
-streamlit run src/mlstore_lite/experiments/final_demo_app.py
-```
+## Related Reading Material In The Repo
 
-The UI reuses the same `run_final_demo()` function as the terminal command. It
-does not implement a separate pipeline.
-
-The UI is meant to feel like a small project walkthrough rather than only a
-dashboard. It uses sidebar navigation and clickable next-step buttons. It
-includes:
-
-- a guided home page
-- a visual end-to-end flow chart
-- a layer-by-layer architecture guide
-- a DDIA learning map that connects chapters to implementation milestones
-- representative results
-- final report draft
-- weekly notes, selected one at a time
-- limitations and future-work pages
+- `docs/architecture.md`: final system overview
+- `docs/weekly-notes/`: week-by-week learning notes
+- `docs/final-report-draft/final-report.md`: report draft
+- `docs/final-report-draft/results.md`: representative local results
 
 ## Generated Output
 

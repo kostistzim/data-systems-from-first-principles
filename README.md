@@ -99,17 +99,12 @@ Run the final terminal demo:
 python -m mlstore_lite.experiments.final_demo
 ```
 
-Optionally install and run the Streamlit project viewer:
+For reviewing the project, start with:
 
-```bash
-python -m pip install ".[ui]"
-streamlit run src/mlstore_lite/experiments/final_demo_app.py
-```
-
-The Streamlit app includes a clickable guided home page, sidebar navigation, the
-final demo, a visual architecture walkthrough, a DDIA learning map,
-representative results, the final report draft, weekly notes, limitations, and
-future-work ideas.
+- `docs/architecture.md` for the final system shape
+- `docs/final-demo.md` for the terminal demo
+- `docs/weekly-notes/` for the learning diary
+- `docs/final-report-draft/` for report material
 
 The old development commands used `PYTHONPATH=src`, but installing the project
 with `python -m pip install -r requirements.txt` makes that unnecessary.
