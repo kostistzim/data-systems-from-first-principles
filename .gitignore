@@ -10,3 +10,19 @@ demo_data/
 data/raw/
 model_artifacts/
 .DS_Store
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.toc
+*.synctex.gz
+
+# Local copy of the downloaded DTU template; report source lives in docs/final-report-draft/dtu-template/
+docs/DTU_Report_template__2_/

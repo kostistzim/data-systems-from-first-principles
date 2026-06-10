@@ -1,0 +1,132 @@
+\documentclass[12pt,oneside,a4paper,english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.25cm,headheight=26pt,includeheadfoot]{geometry}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{titlesec}
+\usepackage{titling}
+\usepackage[framed, numbered]{matlab-prettifier}
+\usepackage{changepage}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{caption}
+\usepackage{tocloft}
+\usepackage{setspace}
+\usepackage{multirow}
+\usepackage{titling}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{booktabs}
+\usepackage{indentfirst}
+\usepackage{lscape}
+\usepackage{booktabs,caption}
+\usepackage[flushleft]{threeparttable}
+\usepackage[english]{nomencl}
+\usepackage{xcolor}
+\usepackage{lipsum}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{calc}
+\usepackage{etoolbox}
+\usepackage{bookmark}
+\usepackage{multicol}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+
+\definecolor{codebg}{HTML}{F7F7F7}
+\definecolor{coderule}{HTML}{D8D8D8}
+\definecolor{dtuRed}{HTML}{990000}
+\definecolor{flowBlue}{HTML}{2F5F8F}
+\definecolor{flowGreen}{HTML}{4E7D58}
+\definecolor{flowGold}{HTML}{B58A2A}
+\definecolor{flowRose}{HTML}{9A4D43}
+\definecolor{flowInk}{HTML}{252733}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\passthrough}[1]{#1}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{coderule},
+  backgroundcolor=\color{codebg},
+  numbers=none,
+  columns=fullflexible,
+  keepspaces=true
+}
+
+% --- set footer and header ---
+\pagestyle{fancy}
+\fancyhf{}
+
+\setlength{\parindent}{2em}
+\title{Data-Intensive AI Systems}
+\makeatletter\let\Title\@title\makeatother
+
+\newlist{steps}{enumerate}{1}
+\setlist[steps, 1]{leftmargin=1.5cm,label = Step \arabic*:}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.75}
+
+\rhead{}
+\lhead{\Title}
+\rfoot{\includegraphics[height=1.25cm]{root/logo.pdf}}
+\setlength\headheight{16pt}
+\setlength{\footskip}{50pt}
+\cfoot{\thepage}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=dtuRed,
+    urlcolor=dtuRed,
+    citecolor=dtuRed
+}
+
+% --- End of page settings ---
+
+\begin{document}
+\pagenumbering{roman}
+\input{sources/0_frontpage.tex}
+
+\newpage
+\doublespacing
+\renewcommand{\baselinestretch}{1}\normalsize
+\tableofcontents
+\renewcommand{\baselinestretch}{1}\normalsize
+\thispagestyle{fancy}
+
+\newpage
+\pagenumbering{arabic}
+\fancyfoot[C]{Page \thepage\ of \pageref{EndOfText}}
+
+\input{sources/1_introduction.tex}
+
+\label{EndOfText}
+
+\newpage
+\pagenumbering{Roman}
+\fancyfoot[C]{Page \thepage\ of \pageref{endOfDoc}}
+\addcontentsline{toc}{section}{Key Terms}
+\section*{Key Terms}
+\input{sources/9_nomenclat.tex}
+
+\newpage
+\addcontentsline{toc}{section}{References}
+\nocite{*}
+\bibliography{document.bib}
+\bibliographystyle{ieeetr}
+
+\label{endOfDoc}
+\end{document}

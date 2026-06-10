@@ -1,4 +1,7 @@
-# MLStore-Lite Final Report Draft
+# Data-Intensive AI Systems: Building ML Infrastructure from First Principles
+
+Student number: s242796
+
 
 ## 1. Introduction
 
@@ -424,8 +427,15 @@ locally under:
 data/raw/retailrocket/events.csv
 ```
 
-If the file is missing, the script uses a small built-in sample. This keeps the
-repository easy to run while still allowing a larger dataset later.
+This is the RetailRocket ecommerce events dataset from Kaggle. Its rows contain
+event-style fields such as timestamp, visitor id, event type, and item id. In
+the project mapping, `visitorid` becomes the user, `event` becomes actions such
+as view, add-to-cart, or purchase, `itemid` becomes the item token, and
+`timestamp` orders the sequence.
+
+If the file is missing, the script uses a small built-in sample with the same
+shape. This keeps the repository easy to run while still allowing the same
+pipeline to be repeated with a larger external dataset.
 
 The recommender connects back to the rest of the system:
 

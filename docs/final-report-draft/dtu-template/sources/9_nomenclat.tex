@@ -1,0 +1,42 @@
+\scriptsize
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.1em}
+\begin{multicols}{2}
+\begin{description}[leftmargin=1.9cm,style=nextline,itemsep=0.05em]
+    \item[DDIA] \textit{Designing Data-Intensive Applications}, the main book used as architectural inspiration.
+    \item[Storage engine] The layer that writes and reads key-value data on one local node.
+    \item[Key-value store] A storage model where every record is addressed by a key and returns a value.
+    \item[WAL] Write-ahead log: durable append-only record written before in-memory state is updated.
+    \item[Memtable] In-memory table for recent writes before they are flushed to disk.
+    \item[SSTable-like file] Immutable sorted file inspired by Sorted String Tables in log-structured storage.
+    \item[Compaction] Background merge process that combines files and removes overwritten values.
+    \item[Node] One local storage instance backed by its own directory.
+    \item[Replica] A copy of the same shard data stored on another node.
+    \item[RF] Replication factor. In this project RF=3 means one leader and two followers per shard.
+    \item[Leader] Replica that receives writes first in the leader-follower setup.
+    \item[Follower] Replica that copies writes from the leader.
+    \item[Failover] Switching to another replica when the current leader is unavailable.
+    \item[Shard] Logical partition of the key space. A shard owns some keys, not one specific file.
+    \item[Consistent hashing] Routing method that maps keys and shards onto a hash ring.
+    \item[Virtual node] Extra hash-ring position used to spread keys more evenly across shards.
+    \item[Feature] Derived value used by an ML model, such as click count or purchase count.
+    \item[Feature key] Human-readable key naming a feature, such as a user's click count.
+    \item[Feature store] Shared place where computed features are stored and served to models.
+    \item[Batch processing] Processing a finite dataset, usually historical data already available.
+    \item[Map-shuffle-reduce] Pattern where records are mapped, grouped by key, and reduced into final values.
+    \item[Stream processing] Processing events as they arrive over time.
+    \item[Event log] Append-only sequence of events read by consumers.
+    \item[Offset] Consumer position inside an event log.
+    \item[Tumbling window] Fixed-size time window used to group recent stream events.
+    \item[Observability] Logging, timing, and recording enough information to inspect system behavior.
+    \item[JSON-lines] File format where each line is a separate JSON object.
+    \item[Lineage] Record of which inputs were used to create a feature or prediction.
+    \item[Quality check] Validation step that accepts or rejects input events before processing.
+    \item[Inference] Running a model on served features or event histories to produce a prediction.
+    \item[Sequential recommender] Model that uses the order of user events, not only aggregate counts.
+    \item[Token] Symbol used by the recommender, such as \texttt{event:view} or \texttt{item:laptop}.
+    \item[Attention] Mechanism that assigns different weights to parts of a user history.
+    \item[RetailRocket dataset] Kaggle ecommerce event dataset supported by the recommender scripts.
+\end{description}
+\end{multicols}
+\normalsize
