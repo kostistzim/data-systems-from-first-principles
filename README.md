@@ -57,16 +57,36 @@ Packaging is defined in `pyproject.toml`. The `requirements.txt` file is only a
 small convenience wrapper for installing the project with its development
 dependency, `pytest`.
 
+Show the available project commands:
+
+```bash
+make help
+```
+
+Run the quick reviewer path:
+
+```bash
+make quick
+```
+
+This runs tests, the final terminal demo, and the Week 11 recommender demo.
+
+Run the full local verification path:
+
+```bash
+make all
+```
+
 Run the full test suite:
 
 ```bash
-python -m pytest -q
+make test
 ```
 
 Optionally run the compile check on macOS/Linux:
 
 ```bash
-PYTHONPYCACHEPREFIX=/tmp/mlstore-pycache python -m compileall src tests
+make compile
 ```
 
 On Windows PowerShell, activate the virtual environment with:
@@ -78,38 +98,44 @@ On Windows PowerShell, activate the virtual environment with:
 Run the Week 8 evaluation script:
 
 ```bash
-python -m mlstore_lite.experiments.week8_evaluation
+make week8
 ```
 
 Run the Week 9 AI inference demo:
 
 ```bash
-python -m mlstore_lite.experiments.week9_ai_inference_demo
+make week9
 ```
 
 Run the Week 10 scaling experiments:
 
 ```bash
-python -m mlstore_lite.experiments.week10_scaling_experiment
-python -m mlstore_lite.experiments.week10_hotspot_experiment
+make week10
 ```
 
 Run the final terminal demo:
 
 ```bash
-python -m mlstore_lite.experiments.final_demo
+make demo
 ```
 
 Run the Week 11 sequential recommender:
 
 ```bash
-python -m mlstore_lite.experiments.week11_train_sequential_recommender
-python -m mlstore_lite.experiments.week11_recommender_demo
+make week11
+```
+
+Docker is optional, but useful for checking the project in a clean environment:
+
+```bash
+make docker-build
+make docker-run
 ```
 
 For reviewing the project, start with:
 
 - `docs/architecture.md` for the final system shape
+- `docs/runbook.md` for all run commands
 - `docs/final-demo.md` for the terminal demo
 - `docs/weekly-notes/` for the learning diary
 - `docs/final-report-draft/` for report material
@@ -122,6 +148,7 @@ with `python -m pip install -r requirements.txt` makes that unnecessary.
 - `src/mlstore_lite/`: implementation code
 - `tests/`: unit and integration tests
 - `docs/architecture.md`: compact architecture overview
+- `docs/runbook.md`: practical run commands
 - `docs/cloud-architecture.md`: possible cloud version of the architecture
 - `docs/weekly-notes/`: learning notes for Weeks 1-11
 - `docs/final-report-draft/`: report draft and supporting material

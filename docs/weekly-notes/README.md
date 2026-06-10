@@ -61,14 +61,13 @@ single-node storage
 The quickest way to check the project is:
 
 ```text
-python -m pytest -q
-python -m mlstore_lite.experiments.week8_evaluation
-python -m mlstore_lite.experiments.week9_ai_inference_demo
-python -m mlstore_lite.experiments.week10_scaling_experiment
-python -m mlstore_lite.experiments.week10_hotspot_experiment
-python -m mlstore_lite.experiments.week11_train_sequential_recommender
-python -m mlstore_lite.experiments.week11_recommender_demo
-python -m mlstore_lite.experiments.final_demo
+make quick
+```
+
+The full local verification path is:
+
+```text
+make all
 ```
 
 Use:
@@ -78,6 +77,11 @@ docs/final-report-draft/final-report.md
 ```
 
 as the report draft, and use this directory as the learning diary behind it.
+For all run commands, see:
+
+```text
+docs/runbook.md
+```
 
 ## Current Project Story
 

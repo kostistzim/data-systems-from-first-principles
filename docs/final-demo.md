@@ -23,11 +23,17 @@ stored features
 Run:
 
 ```bash
-python -m mlstore_lite.experiments.final_demo
+make demo
 ```
 
 This is the recommended grading/submission path because it has no optional UI
 dependency.
+
+The underlying Python command is:
+
+```bash
+python -m mlstore_lite.experiments.final_demo
+```
 
 ## What To Inspect
 
@@ -46,6 +52,7 @@ visible, not to benchmark performance.
 ## Related Reading Material In The Repo
 
 - `docs/architecture.md`: final system overview
+- `docs/runbook.md`: all local and Docker commands
 - `docs/weekly-notes/`: week-by-week learning notes
 - `docs/final-report-draft/final-report.md`: report draft
 - `docs/final-report-draft/results.md`: representative local results

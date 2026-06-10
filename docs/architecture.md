@@ -96,7 +96,7 @@ size and request skew grow.
 The easiest way to see the full local pipeline is:
 
 ```text
-python -m mlstore_lite.experiments.final_demo
+make demo
 ```
 
 For a possible cloud version of the same architecture, see:

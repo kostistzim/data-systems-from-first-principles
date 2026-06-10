@@ -1,0 +1,14 @@
+.git
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+*.egg-info
+.DS_Store
+demo_data
+data/raw
+model_artifacts
+.logs
+.data
+ddia_vol4.md
+ddia_vol4.pdf

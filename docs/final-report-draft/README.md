@@ -34,3 +34,21 @@ snippets and refer to the repository for implementation details.
 The sequential recommender material is optional report material. It is useful
 if the final submission needs a stronger AI extension, but it should still be
 summarized briefly to stay within the 10-page limit.
+
+For reproducing the local results, use the project runbook:
+
+```text
+../runbook.md
+```
+
+The shortest verification command is:
+
+```bash
+make quick
+```
+
+The full local verification command is:
+
+```bash
+make all
+```
