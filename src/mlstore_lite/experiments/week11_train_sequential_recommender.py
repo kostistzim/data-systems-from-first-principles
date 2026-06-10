@@ -4,6 +4,7 @@ import shutil
 
 from mlstore_lite.ai import TinyAttentionRecommender
 from mlstore_lite.observability import ExperimentLog, timed
+from mlstore_lite.quality import validate_events, write_quality_report
 from mlstore_lite.training import Vocabulary, build_sequence_examples, load_events_or_sample
 
 
@@ -13,6 +14,7 @@ ARTIFACT_DIR = "model_artifacts/week11"
 MODEL_PATH = os.path.join(ARTIFACT_DIR, "tiny_attention_recommender.json")
 VOCAB_PATH = os.path.join(ARTIFACT_DIR, "vocabulary.json")
 METRICS_PATH = os.path.join(BASE_DIR, "training_metrics.json")
+QUALITY_REPORT_PATH = os.path.join(BASE_DIR, "training_quality_report.json")
 EXPERIMENT_LOG_PATH = os.path.join(BASE_DIR, "experiments.jsonl")
 
 
@@ -28,6 +30,19 @@ def train_week11_model(
     os.makedirs(ARTIFACT_DIR, exist_ok=True)
 
     events, source = load_events_or_sample(dataset_path, max_rows=max_rows)
+    quality_report = validate_events(
+        [
+            {
+                "user_id": event.user_id,
+                "event_type": event.event_type,
+                "item_id": event.item_id,
+                "timestamp": event.timestamp,
+            }
+            for event in events
+        ],
+        require_timestamp=True,
+    )
+    write_quality_report(QUALITY_REPORT_PATH, quality_report)
     examples = build_sequence_examples(events, max_history_events=10)
     if len(examples) < 2:
         raise ValueError("Need at least two sequence examples to train Week 11 model")
@@ -52,6 +67,8 @@ def train_week11_model(
     result = {
         "dataset_source": source,
         "event_count": len(events),
+        "quality_valid_count": quality_report.valid_count,
+        "quality_invalid_count": quality_report.invalid_count,
         "example_count": len(examples),
         "train_examples": len(train_examples),
         "test_examples": len(test_examples),
@@ -61,6 +78,7 @@ def train_week11_model(
         "test_metrics": test_metrics,
         "model_path": MODEL_PATH,
         "vocabulary_path": VOCAB_PATH,
+        "quality_report_path": QUALITY_REPORT_PATH,
     }
     write_json(METRICS_PATH, result)
     record_experiment_log(result)
@@ -121,6 +139,8 @@ def format_summary(result: dict) -> str:
             "=== WEEK 11 SEQUENTIAL RECOMMENDER TRAINING ===",
             f"dataset_source={result['dataset_source']}",
             f"events={result['event_count']}",
+            f"quality_valid={result['quality_valid_count']}",
+            f"quality_invalid={result['quality_invalid_count']}",
             f"examples={result['example_count']}",
             f"vocabulary_size={result['vocabulary_size']}",
             f"training_seconds={result['training_seconds']}",
@@ -136,6 +156,7 @@ def format_summary(result: dict) -> str:
             f"model={result['model_path']}",
             f"vocabulary={result['vocabulary_path']}",
             f"metrics={METRICS_PATH}",
+            f"quality_report={result['quality_report_path']}",
         ]
     )
 

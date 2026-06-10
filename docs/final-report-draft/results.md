@@ -274,3 +274,38 @@ Generated output:
 ```text
 demo_data/week11/recommender_demo/predictions.jsonl
 ```
+
+## Week 12 Metadata, Lineage, and Data Quality
+
+Command:
+
+```bash
+make week12
+```
+
+Representative output:
+
+```text
+registered_features=10
+quality_valid=3
+quality_invalid=2
+batch_features_written=6
+lineage_records=1
+prediction_probability=0.3100
+prediction_label=low_intent
+```
+
+Interpretation:
+
+- the feature registry describes the core batch, stream, and prediction keys
+- the quality validator catches intentionally bad demo events
+- valid events continue into batch feature computation
+- the lineage log records which feature keys were used for the prediction
+
+Generated output:
+
+```text
+demo_data/week12/metadata_lineage_quality/quality_report.json
+demo_data/week12/metadata_lineage_quality/lineage.jsonl
+demo_data/week12/metadata_lineage_quality/predictions.jsonl
+```

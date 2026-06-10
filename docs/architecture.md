@@ -1,8 +1,9 @@
 # MLStore-Lite Architecture
 
 MLStore-Lite is a local educational prototype of a feature platform. It builds
-from storage internals up to online model inference and a small sequential
-recommender.
+from storage internals up to online model inference, a small sequential
+recommender, and a final inspection layer for metadata, lineage, and data
+quality.
 
 ## Layers
 
@@ -72,6 +73,17 @@ embeddings, position signal, attention over recent events, and a scoring head.
 It is intentionally local and dependency-light, but it shows how the earlier
 data-system layers can feed a more realistic AI consumer.
 
+### 10. Metadata, Lineage, and Data Quality
+
+Week 12 adds a small inspection layer:
+
+- a feature registry that explains what stored feature keys mean
+- data quality checks that validate raw events before processing
+- lineage records that show which feature keys were used for predictions
+
+This layer does not make MLStore-Lite more distributed. It makes the system
+easier to inspect and explain.
+
 ## Current Topology
 
 The demos use:
@@ -82,6 +94,7 @@ The demos use:
 - no real network transport
 - no automatic consensus or leader election
 - no production deep-learning training stack
+- no enterprise metadata or governance service
 
 This keeps the implementation small enough to study while still showing the
 core architecture of a larger data system.

@@ -9,11 +9,15 @@ from mlstore_lite.experiments.week11_train_sequential_recommender import (
     train_week11_model,
 )
 from mlstore_lite.integration import create_mlstore_lite_system
+from mlstore_lite.lineage import LineageLog
+from mlstore_lite.quality import validate_events, write_quality_report
 from mlstore_lite.training import Vocabulary, build_user_histories, load_events_or_sample, to_batch_events
 
 
 BASE_DIR = "demo_data/week11/recommender_demo"
 PREDICTION_LOG_PATH = os.path.join(BASE_DIR, "predictions.jsonl")
+LINEAGE_LOG_PATH = os.path.join(BASE_DIR, "lineage.jsonl")
+QUALITY_REPORT_PATH = os.path.join(BASE_DIR, "quality_report.json")
 
 
 def run_week11_recommender_demo() -> dict:
@@ -24,19 +28,35 @@ def run_week11_recommender_demo() -> dict:
     events, source = load_events_or_sample()
     histories = build_user_histories(events)
     system = create_mlstore_lite_system(BASE_DIR)
-    system.run_batch_features(to_batch_events(events))
+    batch_quality = validate_events(to_batch_events(events))
+    write_quality_report(QUALITY_REPORT_PATH, batch_quality)
+    system.run_batch_features(batch_quality.valid_events)
 
     model = TinyAttentionRecommender.load(MODEL_PATH)
     vocabulary = Vocabulary.load(VOCAB_PATH)
     inference = SequentialInferenceService(model, vocabulary)
     prediction_log = PredictionLog(PREDICTION_LOG_PATH)
+    lineage_log = LineageLog(LINEAGE_LOG_PATH)
 
     user_ids = sorted(histories.keys())[:4] + ["999"]
     predictions = []
     for user_id in user_ids:
-        prediction = inference.predict_from_events(user_id, histories.get(user_id, []))
+        user_events = histories.get(user_id, [])
+        prediction = inference.predict_from_events(user_id, user_events)
         prediction_log.record(prediction)
-        write_prediction_to_store(system, prediction)
+        output_keys = write_prediction_to_store(system, prediction)
+        lineage_log.record_prediction(
+            user_id=user_id,
+            model_version=prediction["model_version"],
+            input_feature_keys=[],
+            output_keys=output_keys,
+            extra={
+                "input_event_count": len(user_events),
+                "input_token_count": prediction["sequence_length"],
+                "label": prediction["label"],
+                "confidence": prediction["confidence"],
+            },
+        )
         predictions.append(prediction)
 
     audit = summarize_predictions(predictions)
@@ -46,22 +66,23 @@ def run_week11_recommender_demo() -> dict:
         "prediction_count": len(predictions),
         "predictions": predictions,
         "audit": audit,
+        "quality_valid_count": batch_quality.valid_count,
+        "quality_invalid_count": batch_quality.invalid_count,
         "shard_distribution": status["key_distribution"],
         "prediction_log_path": PREDICTION_LOG_PATH,
+        "lineage_log_path": LINEAGE_LOG_PATH,
+        "quality_report_path": QUALITY_REPORT_PATH,
         "base_dir": BASE_DIR,
     }
 
 
-def write_prediction_to_store(system, prediction: dict) -> None:
+def write_prediction_to_store(system, prediction: dict) -> list[str]:
     user_id = prediction["user_id"]
-    system.store.put(
-        f"prediction:user:{user_id}:purchase_probability",
-        str(prediction["purchase_probability"]),
-    )
-    system.store.put(
-        f"prediction:user:{user_id}:label",
-        prediction["label"],
-    )
+    probability_key = f"prediction:user:{user_id}:purchase_probability"
+    label_key = f"prediction:user:{user_id}:label"
+    system.store.put(probability_key, str(prediction["purchase_probability"]))
+    system.store.put(label_key, prediction["label"])
+    return [probability_key, label_key]
 
 
 def reset_demo_dir() -> None:
@@ -75,6 +96,8 @@ def format_summary(result: dict) -> str:
         "=== WEEK 11 SEQUENTIAL RECOMMENDER DEMO ===",
         f"dataset_source={result['dataset_source']}",
         f"prediction_count={result['prediction_count']}",
+        f"quality_valid={result['quality_valid_count']}",
+        f"quality_invalid={result['quality_invalid_count']}",
         f"shard_distribution={result['shard_distribution']}",
         "",
         "Predictions:",
@@ -98,6 +121,8 @@ def format_summary(result: dict) -> str:
             "Generated output:",
             f"base_dir={result['base_dir']}",
             f"prediction_log={result['prediction_log_path']}",
+            f"lineage_log={result['lineage_log_path']}",
+            f"quality_report={result['quality_report_path']}",
         ]
     )
     return "\n".join(lines)

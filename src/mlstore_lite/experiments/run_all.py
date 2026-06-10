@@ -73,6 +73,7 @@ def build_steps(quick: bool, skip_tests: bool) -> list[Step]:
             Step("Week 10 hotspot experiment", [python, "-m", "mlstore_lite.experiments.week10_hotspot_experiment"]),
             Step("Week 11 recommender training", [python, "-m", "mlstore_lite.experiments.week11_train_sequential_recommender"]),
             Step("Week 11 recommender demo", [python, "-m", "mlstore_lite.experiments.week11_recommender_demo"]),
+            Step("Week 12 metadata lineage quality demo", [python, "-m", "mlstore_lite.experiments.week12_metadata_lineage_quality_demo"]),
             Step("final end-to-end demo", [python, "-m", "mlstore_lite.experiments.final_demo"]),
         ]
     )

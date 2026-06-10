@@ -8,10 +8,14 @@ from mlstore_lite.ai import (
     PurchaseIntentModel,
 )
 from mlstore_lite.integration import create_mlstore_lite_system
+from mlstore_lite.lineage import LineageLog
+from mlstore_lite.quality import QualityReport, validate_events, write_quality_report
 
 
 BASE_DIR = "demo_data/week9/ai"
 PREDICTION_LOG_PATH = os.path.join(BASE_DIR, "predictions.jsonl")
+LINEAGE_LOG_PATH = os.path.join(BASE_DIR, "lineage.jsonl")
+QUALITY_REPORT_PATH = os.path.join(BASE_DIR, "quality_report.json")
 RECENT_WINDOW_STARTS = [0, 60, 120, 180, 240]
 
 
@@ -63,9 +67,18 @@ def make_stream_events() -> list[dict]:
 def main() -> None:
     reset_demo_dir()
     system = create_mlstore_lite_system(BASE_DIR)
+    batch_quality = validate_events(make_batch_events())
+    stream_quality = validate_events(make_stream_events(), require_timestamp=True)
+    write_quality_report(
+        QUALITY_REPORT_PATH,
+        QualityReport(
+            valid_events=batch_quality.valid_events + stream_quality.valid_events,
+            issues=batch_quality.issues + stream_quality.issues,
+        ),
+    )
 
-    system.run_batch_features(make_batch_events())
-    system.produce_events(make_stream_events())
+    system.run_batch_features(batch_quality.valid_events)
+    system.produce_events(stream_quality.valid_events)
     system.process_stream_events(max_records=100)
 
     feature_server = FeatureServer(
@@ -74,13 +87,19 @@ def main() -> None:
     )
     model = PurchaseIntentModel()
     prediction_log = PredictionLog(PREDICTION_LOG_PATH)
+    lineage_log = LineageLog(LINEAGE_LOG_PATH)
     inference_service = InferenceService(
         feature_server=feature_server,
         model=model,
         prediction_log=prediction_log,
+        lineage_log=lineage_log,
     )
 
     print("\n=== WEEK 9 AI INFERENCE DEMO ===")
+    print(
+        f"quality_valid={batch_quality.valid_count + stream_quality.valid_count} "
+        f"quality_invalid={batch_quality.invalid_count + stream_quality.invalid_count}"
+    )
     for user_id in ["0", "1", "2", "999"]:
         prediction = inference_service.predict_user(user_id)
         print(
@@ -93,6 +112,10 @@ def main() -> None:
 
     print("\nPrediction log:")
     print(PREDICTION_LOG_PATH)
+    print("Lineage log:")
+    print(LINEAGE_LOG_PATH)
+    print("Quality report:")
+    print(QUALITY_REPORT_PATH)
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ At the moment, the code implementation is complete through:
 - Week 9: online feature serving and model inference
 - Week 10: local scaling experiments and cloud architecture
 - Week 11: sequential recommender extension
+- Week 12: metadata, lineage, and data quality
 
 ## How To Read These Notes
 
@@ -40,6 +41,7 @@ After that, the weekly notes are meant to be read in order:
 9. `week09-ai-inference.md`
 10. `week10-scaling-and-cloud.md`
 11. `week11-sequential-recommender.md`
+12. `week12-metadata-lineage-quality.md`
 
 That order follows the architecture of the system itself:
 
@@ -54,6 +56,7 @@ single-node storage
     -> online feature serving and model inference
     -> local scaling experiments and cloud design
     -> sequential recommender extension
+    -> metadata, lineage, and data quality
 ```
 
 ## Run This First
@@ -112,6 +115,9 @@ So far, MLStore-Lite can:
 - describe a possible cloud version of the architecture
 - train a small Transformer-style sequential recommender
 - log sequence-model predictions and a small prediction audit
+- describe feature metadata in a local registry
+- validate raw events before processing
+- write lineage records for predictions
 
 ## Important Conceptual Layers
 
@@ -243,6 +249,18 @@ This answers:
 How can ordered user behavior feed a more realistic AI model?
 ```
 
+### Week 12 metadata, lineage, and data quality
+
+- `FeatureRegistry`
+- `LineageLog`
+- quality validators
+
+This answers:
+
+```text
+How can we explain features, validate inputs, and trace predictions?
+```
+
 ## Current Intended Topology
 
 The current notes and examples use:
@@ -279,5 +297,6 @@ At the current stage, the implemented system is validated by:
 - Week 10 hotspot experiment
 - Week 11 sequential recommender training script
 - Week 11 recommender demo
+- Week 12 metadata/lineage/quality demo
 
-So this directory now documents the implemented course project through Week 11.
+So this directory now documents the implemented course project through Week 12.

@@ -16,6 +16,7 @@ stored features
   -> online feature serving
   -> purchase-intent predictions
   -> prediction log
+  -> lineage log and quality report
 ```
 
 ## Terminal Demo
@@ -45,6 +46,8 @@ After running the demo, look for:
 - shard distribution
 - prediction probabilities
 - prediction warnings for missing or incomplete feature context
+- quality report path
+- lineage log path
 
 These outputs are intentionally small. The goal is to make the architecture
 visible, not to benchmark performance.
@@ -63,6 +66,14 @@ The demo writes generated files under:
 
 ```text
 demo_data/final_demo/
+```
+
+The most useful generated files are:
+
+```text
+demo_data/final_demo/predictions.jsonl
+demo_data/final_demo/lineage.jsonl
+demo_data/final_demo/quality_report.json
 ```
 
 These files are useful for inspection but should not be committed.

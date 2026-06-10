@@ -77,6 +77,7 @@ Week 10 scaling experiment
 Week 10 hotspot experiment
 Week 11 recommender training
 Week 11 recommender demo
+Week 12 metadata/lineage/quality demo
 final demo
 ```
 
@@ -87,6 +88,7 @@ make week8
 make week9
 make week10
 make week11
+make week12
 ```
 
 These are useful when reading the weekly notes and wanting to run only the code

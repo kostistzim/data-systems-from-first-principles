@@ -15,8 +15,8 @@ points for understanding the architecture of data-intensive systems. The goal is
 to build small versions of their central ideas so that the internal design
 becomes easier to inspect: write-ahead logging, sorted-string tables,
 replication, partitioning, batch processing, stream processing, observability,
-online model inference, and sequential recommendation can all be studied in one
-code base.
+online model inference, sequential recommendation, metadata, lineage, and data
+quality can all be studied in one code base.
 
 The final system can run a small feature workflow end to end. Raw historical
 events are converted into batch features, new events are appended to a stream
@@ -59,6 +59,7 @@ The main DDIA reading and implementation mapping was:
 | Week 9: Online feature serving and inference | Extension from data systems into ML infrastructure | Feature serving, deterministic model inference, confidence/warning output, and prediction logging |
 | Week 10: Scaling and cloud design | DDIA partitioning/replication/processing tradeoffs revisited | Workload scaling experiment, shard hotspot experiment, and cloud architecture design sketch |
 | Week 11: Sequential recommender | Extension from feature serving into sequence-based ML | Ordered user histories, token vocabulary, tiny attention model, prediction audit, and model card |
+| Week 12: Metadata, lineage, and data quality | MLOps extension for inspection and traceability | Feature registry, event validation, quality reports, and prediction lineage |
 
 More specifically, the implementation was guided by the following DDIA sections
 and ideas:
@@ -84,6 +85,7 @@ and ideas:
 | Observability and evaluation | DDIA's recurring emphasis on tradeoffs, operational behavior, and failure modes | Week 8 records timings, JSON-lines experiment results, and limitations |
 | Cloud design | DDIA's broader discussion of data systems as composed services | Week 10 maps the local layers to possible cloud services such as Kafka, Spark, Flink, Cassandra, and model serving |
 | Sequential recommendation | Extension beyond DDIA into ML systems using event histories | Week 11 uses ordered events from the pipeline as model input instead of only feature counts |
+| Metadata and lineage | MLOps inspection theme | Week 12 explains feature meanings, checks event quality, and records prediction traces |
 
 Several DDIA topics were intentionally not implemented deeply. Transactions,
 consensus, automatic leader election, distributed commit protocols, real
@@ -115,6 +117,7 @@ Storage engine
   -> Evaluation and observability
   -> Online feature serving and model inference
   -> Sequential recommendation
+  -> Metadata, lineage, and data quality
 ```
 
 This structure is useful because it separates concerns. The storage engine only
@@ -437,7 +440,37 @@ events
 This makes the AI layer more realistic because it consumes ordered behavior
 instead of only manually chosen feature counts.
 
-## 12. Comparison With Production Tools
+## 12. Metadata, Lineage, and Data Quality
+
+The final polish layer adds three inspection tools.
+
+The feature registry explains what stored feature keys mean. The storage engine
+only sees keys and values, but a reader needs to know that
+`feature:user:42:click_count` means the number of historical click-like events
+for a user. The registry records the feature name, key pattern, source layer,
+value type, description, and models that use it.
+
+The quality layer validates raw events before they are processed. It checks
+simple rules such as required user ids, known event types, valid timestamps, and
+non-negative amounts. Invalid events are written into a quality report and
+skipped in demos.
+
+The lineage layer records which inputs were used for a prediction. For the
+feature-count model, a lineage record stores the input feature keys, missing
+features, model version, and output prediction keys. For the sequential
+recommender, it records the number of user events and tokens used for the
+prediction.
+
+This layer is intentionally small. It does not add an enterprise metadata
+service. It adds enough traceability to ask:
+
+```text
+What does this feature mean?
+Was the input event valid?
+Which data did this prediction use?
+```
+
+## 13. Comparison With Production Tools
 
 MLStore-Lite is a teaching prototype, so the comparison with production systems
 is conceptual rather than a performance benchmark.
@@ -452,13 +485,14 @@ is conceptual rather than a performance benchmark.
 | Integrated workflow | Databricks / managed platforms | End-to-end data and ML infrastructure |
 | Inference extension | Feature stores / model serving systems | Online feature retrieval and prediction logging |
 | Sequential recommender | Recommendation systems | Ordered user behavior, attention, and purchase prediction |
+| Metadata, lineage, and quality | Feature catalogs / ML observability tools | Feature definitions, data checks, and prediction traceability |
 
 The main difference is scale and operational complexity. Production tools run
 across real machines, handle concurrent users, recover from many failure modes,
 and optimize for performance. MLStore-Lite runs locally and focuses on making
 the core ideas understandable.
 
-## 13. Limitations
+## 14. Limitations
 
 The most important limitation is that the project is local. Nodes are Python
 objects and directories, not independent networked processes.
@@ -474,6 +508,7 @@ The project does not include:
 - HTTP model serving API
 - a deep implementation of DDIA topics such as transactions and consensus
 - production deep-learning training infrastructure
+- enterprise-grade feature catalog, lineage UI, or data quality platform
 
 The evaluation is also intentionally small. The measurements are useful for
 checking that the system runs and for discussing relative behavior, but they are
@@ -492,12 +527,13 @@ observability.
 These limitations are acceptable because the goal is educational. The project
 prioritizes clarity of architecture over production completeness.
 
-## 14. Conclusion
+## 15. Conclusion
 
 MLStore-Lite implements a compact data infrastructure prototype for ML-style
 features. The project starts from a single-node storage engine and gradually
 adds replication, sharding, batch processing, stream processing, integration,
-observability, online model inference, and a small sequential recommender.
+observability, online model inference, a small sequential recommender, and a
+metadata/lineage/quality layer.
 
 The final result shows how raw events can become derived feature values, and how
 those values can be stored in a sharded replicated backend, served to a model,
@@ -510,5 +546,5 @@ understandable.
 The final architecture can be summarized as:
 
 ```text
-events -> features -> feature store -> online inference -> sequence recommender -> prediction logs
+events -> quality checks -> features -> feature store -> inference -> lineage -> prediction logs
 ```

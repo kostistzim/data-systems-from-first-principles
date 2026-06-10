@@ -24,6 +24,7 @@ storage
   -> online feature serving and inference
   -> local scaling experiments
   -> sequential recommender extension
+  -> metadata, lineage, and data quality
 ```
 
 In practical terms:
@@ -125,6 +126,12 @@ Run the Week 11 sequential recommender:
 make week11
 ```
 
+Run the Week 12 inspection layer:
+
+```bash
+make week12
+```
+
 Docker is optional, but useful for checking the project in a clean environment:
 
 ```bash
@@ -150,7 +157,7 @@ with `python -m pip install -r requirements.txt` makes that unnecessary.
 - `docs/architecture.md`: compact architecture overview
 - `docs/runbook.md`: practical run commands
 - `docs/cloud-architecture.md`: possible cloud version of the architecture
-- `docs/weekly-notes/`: learning notes for Weeks 1-11
+- `docs/weekly-notes/`: learning notes for Weeks 1-12
 - `docs/final-report-draft/`: report draft and supporting material
 
 Generated demo output goes under `demo_data/`. It is useful for inspection, but

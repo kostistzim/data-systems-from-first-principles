@@ -17,6 +17,7 @@ The files in this folder follow that structure:
 - `results.md`
 - `sequential-recommender.md`
 - `model-card.md`
+- `metadata-lineage-quality.md`
 
 The draft is intentionally concise so it can fit within a 10-page limit after
 front page, table of contents, and formatting are applied.

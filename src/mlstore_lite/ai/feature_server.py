@@ -52,6 +52,7 @@ class FeatureServer:
         recent_feature_totals = {
             f"recent_{feature_name}": 0.0 for feature_name in WINDOW_FEATURES
         }
+        recent_source_keys = []
         windows_with_activity = 0
 
         for window_start in self.recent_window_starts:
@@ -65,6 +66,7 @@ class FeatureServer:
                 value = self._read_number(key)
                 if value is not None:
                     recent_feature_totals[f"recent_{feature_name}"] += value
+                    recent_source_keys.append(key)
 
         features.update(recent_feature_totals)
 
@@ -81,6 +83,7 @@ class FeatureServer:
             "missing": missing,
             "checks": checks,
             "source_keys": source_keys,
+            "recent_source_keys": recent_source_keys,
         }
 
     def _read_number(self, key: str) -> Optional[float]:
