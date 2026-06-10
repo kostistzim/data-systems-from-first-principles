@@ -1,7 +1,8 @@
 # MLStore-Lite Architecture
 
 MLStore-Lite is a local educational prototype of a feature platform. It builds
-from storage internals up to online model inference.
+from storage internals up to online model inference and a small sequential
+recommender.
 
 ## Layers
 
@@ -57,6 +58,20 @@ The AI layer consumes the earlier weeks. It does not replace them:
 batch/stream features -> feature store -> feature server -> model prediction
 ```
 
+### 9. Sequential Recommender
+
+Week 11 adds an event-sequence model. Instead of only using feature counts, it
+looks at ordered user histories such as:
+
+```text
+view laptop -> view laptop -> add_to_cart laptop
+```
+
+The implementation is a small Transformer-style model with token IDs,
+embeddings, position signal, attention over recent events, and a scoring head.
+It is intentionally local and dependency-light, but it shows how the earlier
+data-system layers can feed a more realistic AI consumer.
+
 ## Current Topology
 
 The demos use:
@@ -66,6 +81,7 @@ The demos use:
 - local directories as node storage
 - no real network transport
 - no automatic consensus or leader election
+- no production deep-learning training stack
 
 This keeps the implementation small enough to study while still showing the
 core architecture of a larger data system.

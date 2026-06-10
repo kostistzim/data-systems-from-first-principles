@@ -23,6 +23,7 @@ storage
   -> observability
   -> online feature serving and inference
   -> local scaling experiments
+  -> sequential recommender extension
 ```
 
 In practical terms:
@@ -99,6 +100,13 @@ Run the final terminal demo:
 python -m mlstore_lite.experiments.final_demo
 ```
 
+Run the Week 11 sequential recommender:
+
+```bash
+python -m mlstore_lite.experiments.week11_train_sequential_recommender
+python -m mlstore_lite.experiments.week11_recommender_demo
+```
+
 For reviewing the project, start with:
 
 - `docs/architecture.md` for the final system shape
@@ -115,11 +123,14 @@ with `python -m pip install -r requirements.txt` makes that unnecessary.
 - `tests/`: unit and integration tests
 - `docs/architecture.md`: compact architecture overview
 - `docs/cloud-architecture.md`: possible cloud version of the architecture
-- `docs/weekly-notes/`: learning notes for Weeks 1-10
+- `docs/weekly-notes/`: learning notes for Weeks 1-11
 - `docs/final-report-draft/`: report draft and supporting material
 
 Generated demo output goes under `demo_data/`. It is useful for inspection, but
 it is not core source code.
+
+Large raw datasets should go under `data/raw/`, and generated model artifacts
+should go under `model_artifacts/`. Both are ignored by git.
 
 ## Learning Context
 

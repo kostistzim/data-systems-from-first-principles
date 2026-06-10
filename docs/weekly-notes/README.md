@@ -17,6 +17,7 @@ At the moment, the code implementation is complete through:
 - Week 8: evaluation
 - Week 9: online feature serving and model inference
 - Week 10: local scaling experiments and cloud architecture
+- Week 11: sequential recommender extension
 
 ## How To Read These Notes
 
@@ -38,6 +39,7 @@ After that, the weekly notes are meant to be read in order:
 8. `week08-evaluation.md`
 9. `week09-ai-inference.md`
 10. `week10-scaling-and-cloud.md`
+11. `week11-sequential-recommender.md`
 
 That order follows the architecture of the system itself:
 
@@ -51,6 +53,7 @@ single-node storage
     -> local evaluation and observability
     -> online feature serving and model inference
     -> local scaling experiments and cloud design
+    -> sequential recommender extension
 ```
 
 ## Run This First
@@ -63,6 +66,8 @@ python -m mlstore_lite.experiments.week8_evaluation
 python -m mlstore_lite.experiments.week9_ai_inference_demo
 python -m mlstore_lite.experiments.week10_scaling_experiment
 python -m mlstore_lite.experiments.week10_hotspot_experiment
+python -m mlstore_lite.experiments.week11_train_sequential_recommender
+python -m mlstore_lite.experiments.week11_recommender_demo
 python -m mlstore_lite.experiments.final_demo
 ```
 
@@ -101,6 +106,8 @@ So far, MLStore-Lite can:
 - log model predictions as JSON-lines records
 - run local scaling and shard-hotspot experiments
 - describe a possible cloud version of the architecture
+- train a small Transformer-style sequential recommender
+- log sequence-model predictions and a small prediction audit
 
 ## Important Conceptual Layers
 
@@ -218,6 +225,20 @@ This answers:
 How would this local prototype behave under larger or skewed workloads, and what would a cloud version look like?
 ```
 
+### Week 11 sequential recommender extension
+
+- `TinyAttentionRecommender`
+- `SequentialInferenceService`
+- sequence builder
+- vocabulary
+- prediction audit
+
+This answers:
+
+```text
+How can ordered user behavior feed a more realistic AI model?
+```
+
 ## Current Intended Topology
 
 The current notes and examples use:
@@ -252,5 +273,7 @@ At the current stage, the implemented system is validated by:
 - Week 9 AI inference demo
 - Week 10 scaling experiment
 - Week 10 hotspot experiment
+- Week 11 sequential recommender training script
+- Week 11 recommender demo
 
-So this directory now documents the implemented course project through Week 10.
+So this directory now documents the implemented course project through Week 11.

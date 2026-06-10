@@ -13,6 +13,10 @@ The files in this folder follow that structure:
 
 - `Content/Part1.tex`
 - `Content/Part2.tex`
+- `final-report.md`
+- `results.md`
+- `sequential-recommender.md`
+- `model-card.md`
 
 The draft is intentionally concise so it can fit within a 10-page limit after
 front page, table of contents, and formatting are applied.
@@ -26,3 +30,7 @@ Suggested page budget:
 
 Avoid adding long code listings to the main report. Use short architectural
 snippets and refer to the repository for implementation details.
+
+The sequential recommender material is optional report material. It is useful
+if the final submission needs a stronger AI extension, but it should still be
+summarized briefly to stay within the 10-page limit.

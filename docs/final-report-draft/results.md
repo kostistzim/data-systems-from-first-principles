@@ -200,3 +200,77 @@ The generated experiment log is:
 ```text
 demo_data/week10/hotspot/results.jsonl
 ```
+
+## Week 11 Sequential Recommender Training
+
+Command:
+
+```bash
+python -m mlstore_lite.experiments.week11_train_sequential_recommender
+```
+
+Representative output using the built-in sample:
+
+```text
+events=31
+examples=22
+vocabulary_size=17
+training_seconds=0.004547
+
+Test metrics:
+accuracy=0.6667
+precision=0.3333
+recall=1.0
+f1=0.5
+confusion_matrix={'true_positive': 1, 'true_negative': 3, 'false_positive': 2, 'false_negative': 0}
+```
+
+Interpretation:
+
+- the built-in dataset is intentionally tiny, so the metrics are only a smoke
+  test, not a serious recommender benchmark
+- the model has learned enough signal to separate some purchase-like histories
+  from view-only histories
+- a larger RetailRocket CSV can be placed under `data/raw/retailrocket/events.csv`
+  for a more realistic run
+
+Generated files:
+
+```text
+model_artifacts/week11/tiny_attention_recommender.json
+model_artifacts/week11/vocabulary.json
+demo_data/week11/training_metrics.json
+```
+
+## Week 11 Sequential Recommender Demo
+
+Command:
+
+```bash
+python -m mlstore_lite.experiments.week11_recommender_demo
+```
+
+Representative output:
+
+```text
+user=0 probability=0.7051 confidence=0.8801 label=likely_to_purchase top_attention=['item:laptop', 'item:laptop', 'item:laptop']
+user=1 probability=0.9891 confidence=1.0000 label=likely_to_purchase top_attention=['item:phone', 'item:phone', 'item:phone']
+user=2 probability=0.1292 confidence=1.0000 label=low_intent top_attention=['item:monitor', 'item:monitor', 'event:view']
+user=3 probability=0.8886 confidence=1.0000 label=likely_to_purchase top_attention=['item:camera', 'item:camera', 'item:camera']
+user=999 probability=0.2500 confidence=0.7000 label=low_intent top_attention=[]
+```
+
+Interpretation:
+
+- users with repeated interest and add-to-cart/purchase-like histories receive
+  higher probabilities
+- a view-only user receives low purchase intent
+- the missing user has no history, so the prediction remains low
+- top-attention tokens show which recent tokens influenced the small sequence
+  model most
+
+Generated output:
+
+```text
+demo_data/week11/recommender_demo/predictions.jsonl
+```

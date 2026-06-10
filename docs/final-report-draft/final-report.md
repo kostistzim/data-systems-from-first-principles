@@ -15,13 +15,15 @@ points for understanding the architecture of data-intensive systems. The goal is
 to build small versions of their central ideas so that the internal design
 becomes easier to inspect: write-ahead logging, sorted-string tables,
 replication, partitioning, batch processing, stream processing, observability,
-and online model inference can all be studied in one code base.
+online model inference, and sequential recommendation can all be studied in one
+code base.
 
 The final system can run a small feature workflow end to end. Raw historical
 events are converted into batch features, new events are appended to a stream
 log, stream consumers update windowed features, and all feature values are
-stored in a sharded replicated key-value store. The final extension serves those
-features to a small model inference layer and logs predictions for inspection.
+stored in a sharded replicated key-value store. The final extensions serve
+those features to a small model inference layer, train a tiny sequence-based
+recommender, and log predictions for inspection.
 The full local pipeline can be reproduced with one terminal command:
 `python -m mlstore_lite.experiments.final_demo`.
 
@@ -56,6 +58,7 @@ The main DDIA reading and implementation mapping was:
 | Week 8: Evaluation and observability | DDIA operational theme: understanding tradeoffs and system behavior | Structured logs, timing measurements, JSON-lines experiment records, and comparison with production tools |
 | Week 9: Online feature serving and inference | Extension from data systems into ML infrastructure | Feature serving, deterministic model inference, confidence/warning output, and prediction logging |
 | Week 10: Scaling and cloud design | DDIA partitioning/replication/processing tradeoffs revisited | Workload scaling experiment, shard hotspot experiment, and cloud architecture design sketch |
+| Week 11: Sequential recommender | Extension from feature serving into sequence-based ML | Ordered user histories, token vocabulary, tiny attention model, prediction audit, and model card |
 
 More specifically, the implementation was guided by the following DDIA sections
 and ideas:
@@ -80,6 +83,7 @@ and ideas:
 | Windowed stream processing | Chapter 11: stream processing and reasoning about time | Events are grouped into tumbling windows before updating features |
 | Observability and evaluation | DDIA's recurring emphasis on tradeoffs, operational behavior, and failure modes | Week 8 records timings, JSON-lines experiment results, and limitations |
 | Cloud design | DDIA's broader discussion of data systems as composed services | Week 10 maps the local layers to possible cloud services such as Kafka, Spark, Flink, Cassandra, and model serving |
+| Sequential recommendation | Extension beyond DDIA into ML systems using event histories | Week 11 uses ordered events from the pipeline as model input instead of only feature counts |
 
 Several DDIA topics were intentionally not implemented deeply. Transactions,
 consensus, automatic leader election, distributed commit protocols, real
@@ -110,6 +114,7 @@ Storage engine
   -> Integration
   -> Evaluation and observability
   -> Online feature serving and model inference
+  -> Sequential recommendation
 ```
 
 This structure is useful because it separates concerns. The storage engine only
@@ -388,7 +393,51 @@ input features, prediction probability, confidence, label, and warnings. This
 connects the AI extension back to MLOps: model outputs should be traceable and
 debuggable, not just returned and forgotten.
 
-## 11. Comparison With Production Tools
+## 11. Sequential Recommender
+
+The final AI extension adds a small sequential recommender. The earlier model
+uses feature counts. The recommender also uses the order of user events.
+
+For example, these two histories can have similar counts but different meaning:
+
+```text
+view laptop -> view laptop -> add_to_cart laptop
+add_to_cart laptop -> view laptop -> view laptop
+```
+
+A sequence model can use the order. This is closer to how recommendation
+systems reason about user behavior.
+
+The implemented model is a small Transformer-style model rather than a large
+deep-learning system. Events and items become tokens, tokens become numeric
+IDs, numeric IDs become embeddings, and attention weighs the recent sequence.
+The model then outputs a purchase probability, confidence, label, and the tokens
+that received the highest attention.
+
+The training script can read the RetailRocket ecommerce dataset if it is placed
+locally under:
+
+```text
+data/raw/retailrocket/events.csv
+```
+
+If the file is missing, the script uses a small built-in sample. This keeps the
+repository easy to run while still allowing a larger dataset later.
+
+The recommender connects back to the rest of the system:
+
+```text
+events
+  -> user histories
+  -> tiny attention recommender
+  -> prediction log
+  -> sharded store prediction keys
+```
+
+This makes the AI layer more realistic because it consumes ordered behavior
+instead of only manually chosen feature counts.
+
+## 12. Comparison With Production Tools
 
 MLStore-Lite is a teaching prototype, so the comparison with production systems
 is conceptual rather than a performance benchmark.
@@ -402,13 +451,14 @@ is conceptual rather than a performance benchmark.
 | Stream processing | Flink / Kafka Streams | Continuous event processing and windowed state |
 | Integrated workflow | Databricks / managed platforms | End-to-end data and ML infrastructure |
 | Inference extension | Feature stores / model serving systems | Online feature retrieval and prediction logging |
+| Sequential recommender | Recommendation systems | Ordered user behavior, attention, and purchase prediction |
 
 The main difference is scale and operational complexity. Production tools run
 across real machines, handle concurrent users, recover from many failure modes,
 and optimize for performance. MLStore-Lite runs locally and focuses on making
 the core ideas understandable.
 
-## 12. Limitations
+## 13. Limitations
 
 The most important limitation is that the project is local. Nodes are Python
 objects and directories, not independent networked processes.
@@ -420,10 +470,10 @@ The project does not include:
 - background repair
 - distributed query execution
 - production-grade monitoring
-- model training
 - model registry
 - HTTP model serving API
 - a deep implementation of DDIA topics such as transactions and consensus
+- production deep-learning training infrastructure
 
 The evaluation is also intentionally small. The measurements are useful for
 checking that the system runs and for discussing relative behavior, but they are
@@ -442,12 +492,12 @@ observability.
 These limitations are acceptable because the goal is educational. The project
 prioritizes clarity of architecture over production completeness.
 
-## 13. Conclusion
+## 14. Conclusion
 
 MLStore-Lite implements a compact data infrastructure prototype for ML-style
 features. The project starts from a single-node storage engine and gradually
 adds replication, sharding, batch processing, stream processing, integration,
-observability, and online model inference.
+observability, online model inference, and a small sequential recommender.
 
 The final result shows how raw events can become derived feature values, and how
 those values can be stored in a sharded replicated backend, served to a model,
@@ -460,5 +510,5 @@ understandable.
 The final architecture can be summarized as:
 
 ```text
-events -> features -> feature store -> online inference -> prediction logs
+events -> features -> feature store -> online inference -> sequence recommender -> prediction logs
 ```

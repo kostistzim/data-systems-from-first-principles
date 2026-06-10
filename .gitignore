@@ -7,4 +7,6 @@ __pycache__/
 .data/
 .logs/
 demo_data/
+data/raw/
+model_artifacts/
 .DS_Store
